@@ -35,13 +35,13 @@
         "jumbojett/openid-connect-php": "^0.9.10",
         "easyrdf/easyrdf": "^1.1",
         "ml/json-ld": "^1.2",
-        "web-token/jwt-core": "^3.0",
-        "web-token/jwt-key-mgmt": "^3.0",
-        "web-token/jwt-signature": "^3.0",
-        "web-token/jwt-checker": "^3.0",
-        "web-token/jwt-signature-algorithm-hmac": "^3.0",
-        "web-token/jwt-signature-algorithm-ecdsa": "^3.0",
-        "web-token/jwt-signature-algorithm-rsa": "^3.0"
+        "web-token/jwt-core": "^2.2",
+        "web-token/jwt-key-mgmt": "^2.2",
+        "web-token/jwt-signature": "^2.2",
+        "web-token/jwt-checker": "^2.2",
+        "web-token/jwt-signature-algorithm-hmac": "^2.2",
+        "web-token/jwt-signature-algorithm-ecdsa": "^2.2",
+        "web-token/jwt-signature-algorithm-rsa": "^2.2"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.34.1",

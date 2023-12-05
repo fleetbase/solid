@@ -12,5 +12,10 @@ return [
             'prefix' => 'solid',
             'internal_prefix' => 'int'
         ],
+    ],
+    'server' => [
+        'host' => env('SOLID_HOST', 'http://localhost'),
+        'port' => (int) env('SOLID_PORT', 3000),
+        'secure' => (bool) env('SOLID_SECURE', false)
     ]
 ];
