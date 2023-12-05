@@ -1,7 +1,8 @@
 <?php
 
-namespace Fleetbase\Solid\Client\Auth;
+namespace Fleetbase\Solid\Client;
 
+use Fleetbase\Solid\Client\SolidClient;
 use Jose\Component\Checker\AlgorithmChecker;
 use Jose\Component\Checker\HeaderCheckerManager;
 use Jose\Component\Core\AlgorithmManager;
@@ -26,9 +27,22 @@ use Jose\Component\Signature\Serializer\JWSSerializerManager;
 use Jumbojett\OpenIDConnectClient;
 use Jumbojett\OpenIDConnectClientException;
 
-final class OIDCProvider extends OpenIDConnectClient
+final class OIDCClient extends OpenIDConnectClient
 {
     private ?JWK $dpopPrivateKey = null;
+
+    public static function create(SolidClient $solidClient): self
+    {
+        $oidcConfig = $solidClient->getOpenIdConfiguration();
+
+        $oidcClient = new self(data_get($oidcConfig, 'issuer'));
+        // $oidcClient->setClientID();
+        // $oidcClient->setClientSecret();
+        $oidcClient->setProviderURL(data_get($oidcConfig, 'issuer'));
+        // $oidcClient->setRedirectURL();
+
+        return $oidcClient;
+    }
 
     public function authenticate(): bool
     {

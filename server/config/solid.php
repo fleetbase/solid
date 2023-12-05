@@ -14,7 +14,7 @@ return [
         ],
     ],
     'server' => [
-        'host' => env('SOLID_HOST', 'http://localhost'),
+        'host' => env('SOLID_HOST', 'http://solid'),
         'port' => (int) env('SOLID_PORT', 3000),
         'secure' => (bool) env('SOLID_SECURE', false)
     ]

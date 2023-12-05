@@ -24,6 +24,7 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
         */
         $router->prefix(config('solid.api.routing.internal_prefix', 'int'))->group(
             function ($router) {
+                $router->get('test', 'SolidController@play');
                 $router->group(
                     ['prefix' => 'v1', 'middleware' => ['fleetbase.protected']],
                     function ($router) {
