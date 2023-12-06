@@ -37,6 +37,8 @@ class SolidClient
      */
     public IdentityProvider $identity;
 
+    public bool $identityProviderInitialized = false;
+
     private const DEFAULT_MIME_TYPE = 'text/turtle';
     private const LDP_BASIC_CONTAINER = 'http://www.w3.org/ns/ldp#BasicContainer';
     private const LDP_RESOURCE = 'http://www.w3.org/ns/ldp#Resource';
@@ -54,7 +56,15 @@ class SolidClient
         $this->host = config('solid.server.host',  data_get($options, 'host'));
         $this->port = (int) config('solid.server.port',  data_get($options, 'port'));
         $this->secure = (bool) config('solid.server.secure',  data_get($options, 'secure'));
+        $this->initializeIdentityProvider();
+    }
+
+    private function initializeIdentityProvider(): IdentityProvider
+    {
         $this->identity = new IdentityProvider($this);
+        $this->identityProviderInitialized = true;
+
+        return $this->identity;
     }
 
     /**
@@ -76,7 +86,8 @@ class SolidClient
     public function getServerUrl(): string
     {
         $protocol = $this->secure ? 'https' : 'http';
-        return "{$protocol}://{$this->host}:{$this->port}";
+        $host =  preg_replace('#^.*://#', '', $this->host);
+        return "{$protocol}://{$host}:{$this->port}";
     }
 
     /**
@@ -115,8 +126,9 @@ class SolidClient
     private function setAuthenticationHeaders(array &$options, string $method, string $url)
     {
         $headers = data_get($options, 'headers', []);
+        // $headers['Host'] = 'localhost';
 
-        if ($this->identity instanceof IdentityProvider && $accessToken = $this->identity->getAccessToken()) {
+        if ($this->identityProviderInitialized === true && $accessToken = $this->identity->getAccessToken()) {
             $headers['Authorization'] = 'DPoP ' . $accessToken;
             $headers['DPoP'] = $this->identity->createDPoP($method, $url, true);
         }
@@ -152,9 +164,9 @@ class SolidClient
      * @param array $options Options for the request
      * @return Response
      */
-    public function get(string $uri, array $options = []): Response
+    public function get(string $uri, array $data = [], array $options = []): Response
     {
-        return $this->request('get', $uri, $options);
+        return $this->request('get', $uri, $data, $options);
     }
 
     /**
@@ -164,9 +176,9 @@ class SolidClient
      * @param array $data Data to be sent in the request body
      * @return Response
      */
-    public function post(string $uri, array $data = []): Response
+    public function post(string $uri, array $data = [], array $options = []): Response
     {
-        return $this->request('post', $uri, ['json' => $data]);
+        return $this->request('post', $uri, $data, $options);
     }
 
     /**
@@ -176,9 +188,9 @@ class SolidClient
      * @param array $data Data to be sent in the request body
      * @return Response
      */
-    public function put(string $uri, array $data = []): Response
+    public function put(string $uri, array $data = [], array $options = []): Response
     {
-        return $this->request('put', $uri, ['json' => $data]);
+        return $this->request('put', $uri, $data, $options);
     }
 
     /**
@@ -188,9 +200,9 @@ class SolidClient
      * @param array $data Data to be sent in the request body
      * @return Response
      */
-    public function patch(string $uri, array $data = []): Response
+    public function patch(string $uri, array $data = [], array $options = []): Response
     {
-        return $this->request('patch', $uri, ['json' => $data]);
+        return $this->request('patch', $uri, $data, $options);
     }
 
     /**
@@ -200,9 +212,9 @@ class SolidClient
      * @param array $options Options for the request
      * @return Response
      */
-    public function delete(string $uri, array $options = []): Response
+    public function delete(string $uri, array $data = [], array $options = []): Response
     {
-        return $this->request('delete', $uri, $options);
+        return $this->request('delete', $uri, $data, $options);
     }
 
     public function getOpenIdConfiguration()

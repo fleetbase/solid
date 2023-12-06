@@ -24,7 +24,15 @@ class SolidController extends BaseController
     public function play(Request $request)
     {
         $solidClient = new SolidClient();
-        dd($solidClient->identity);
-        // $oidc = $solidClient->identity->registerClient('Fleetbase');
+        $solidClient->identity->registerClient('Fleetbase');
+        // $authenticateResponse = $solidClient->identity->authenticate();
+        // dd($authenticateResponse);
+
+        // // cgeck for access token
+        // dump($solidClient->identity->_getClientCredentials('Fleetbase'));
+        
+        // // create a pod
+        // $response = $solidClient->post('pods', ['username' => 'ron', 'password' => '12345']);
+        // dd($response->json());
     }
 }

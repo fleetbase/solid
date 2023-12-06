@@ -26,8 +26,14 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
             function ($router) {
                 $router->get('test', 'SolidController@play');
                 $router->group(
-                    ['prefix' => 'v1', 'middleware' => ['fleetbase.protected']],
+                    ['prefix' => 'v1'],
                     function ($router) {
+                        $router->group(['middleware' => ['fleetbase.protected']], function ($router) {
+                        });
+
+                        $router->group(['prefix' => 'oidc'], function ($router) {
+                            $router->any('complete-registration', 'OIDCController@completeRegistration');
+                        });
                     }
                 );
             }

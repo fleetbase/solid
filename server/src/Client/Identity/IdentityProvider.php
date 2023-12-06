@@ -5,7 +5,11 @@ namespace Fleetbase\Solid\Client\Identity;
 use EasyRdf\Graph;
 use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Client\OIDCClient;
+use Fleetbase\Support\Utils;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
+use Jumbojett\OpenIDConnectClientException;
 
 class IdentityProvider
 {
@@ -88,19 +92,60 @@ class IdentityProvider
         throw new \BadMethodCallException("Method {$name} does not exist.");
     }
 
-    public function registerClient(string $clientName)
+    public function registerClient(string $clientName, array $params = []): self
     {
         $oidcConfig = $this->solidClient->getOpenIdConfiguration();
         $registrationUrl = data_get($oidcConfig, 'registration_endpoint');
-
-        $response = $this->solidClient->post($registrationUrl, ['client_name' => $clientName]);
+        $response = $this->solidClient->post($registrationUrl, ['client_name' => $clientName, 'redirect_uris' => [url('solid/int/v1/oidc/complete-registration')], ...$params]);
 
         if ($response->successful()) {
             $clientCredentials = $response->json();
-            dd($clientCredentials);
-            $clientId = $clientCredentials['client_id'];
-            $clientSecret = $clientCredentials['client_secret'];
+            $this->setClientCredentials($clientName, $clientCredentials);
+        } else {
+            throw new OpenIDConnectClientException('Error registering: Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them');
         }
+
+        return $this;
+    }
+
+    private function setClientCredentials(string $clientName, $clientCredentials): ?self
+    {
+        $clientId = data_get($clientCredentials, 'client_id');
+        $clientSecret = data_get($clientCredentials, 'client_secret');
+
+        $this->setClientName($clientName);
+        $this->setClientID($clientId);
+        $this->setClientSecret($clientSecret);
+        $this->storeClientCredentials($clientName, $clientCredentials);
+
+        return $this;
+    }
+
+    private function storeClientCredentials(string $clientName, $clientCredentials): void
+    {
+        Redis::set('oidc:client:' . Str::slug($clientName), json_encode($clientCredentials));
+    }
+
+    public function _getClientCredentials($clientName)
+    {
+        $clientCredentialsString = Redis::get('oidc:client:' . Str::slug($clientName));
+
+        if (Utils::isJson($clientCredentialsString)) {
+            return json_decode($clientCredentialsString, false);
+        }
+
+        return null;
+    }
+
+    public function restoreClientCredentials(string $clientName): ?self
+    {
+        $clientCredentials = $this->_getClientCredentials($clientName);
+
+        if ($clientCredentials) {
+            return $this->setClientCredentials($clientName, $clientCredentials);
+        }
+
+        return null;
     }
 
     /**
