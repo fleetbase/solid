@@ -42,9 +42,9 @@
   },
   "dependencies": {
     "@babel/core": "^7.23.2",
-    "@fleetbase/ember-core": "^0.1.8",
-    "@fleetbase/ember-ui": "^0.2.5",
-    "@fleetbase/fleetops-data": "^0.1.5",
+    "@fleetbase/ember-core": "^0.2.4",
+    "@fleetbase/ember-ui": "^0.2.10",
+    "@fleetbase/fleetops-data": "^0.1.8",
     "@fortawesome/ember-fontawesome": "^0.4.1",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
@@ -78,7 +78,7 @@
     "ember-data": "~5.3.0",
     "ember-engines": "^0.9.0",
     "ember-load-initializers": "^2.1.2",
-    "ember-math-helpers": "^2.18.2",
+    "ember-math-helpers": "^4.0.0",
     "ember-page-title": "^8.0.0",
     "ember-qunit": "^8.0.1",
     "ember-resolver": "^11.0.1",
@@ -102,8 +102,7 @@
     "webpack": "^5.89.0"
   },
   "peerDependencies": {
-    "ember-engines": "^0.9.0",
-    "ember-source": ">= 4.0.0"
+    "ember-engines": "^0.9.0"
   },
   "engines": {
     "node": ">= 18"
