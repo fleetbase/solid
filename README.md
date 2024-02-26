@@ -36,28 +36,14 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
 ## Project Milestones:
 
 1. **Research and planning - Milestone 1**
-   - Produce a short document detailing Solid's capabilities and requirements for logistics solution, including a ‘user needs assessment’ which outlines the specific UI/UX changes that would be required in the subsequent milestones.
 
 2. **Back End Development - Solid Server, Solid Auth, Create Pods - Milestone 2**
-   - Solid Server Integration Completed.
-   - Functional Solid Authentication mechanisms integrated into Fleetbase's existing authentication processes.
-   - Fleetbase users can create Pods, and the system supports secure data storage and sharing through these Pods.
-   - Push new release on [GitHub](https://github.com/fleetbase/solid).
 
 3. **Back End Development - Pod for instance or Pod for Organization - Milestone 3**
-   - Develop and implement functionality for managing Pods specific to individual instances or organizations within the Fleetbase logistics platform.
-   - Implement secure data sharing mechanisms between Pods and logistics entities within Fleetbase.
-   - Push new release on [GitHub](https://github.com/fleetbase/solid).
 
 4. **User Interface (UI) Enhancement - Manage Pod In Admin - Milestone 4**
-   - Design and implement an intuitive user interface (UI) for managing Pods within Fleetbase's administrative dashboard.
-   - Ensure seamless integration of Solid-related features into Fleetbase's existing administrative UI.
-   - Push new release on [GitHub](https://github.com/fleetbase/solid).
 
 5. **Further User Interface (UI) Enhancement - Milestone 5**
-   - Identify and incorporate design elements and interactions specific to the new Solid features.
-   - Optimize the overall user experience for logistics professionals interacting with Fleetbase on Solid.
-   - Push new release on [GitHub](https://github.com/fleetbase/solid).
 
 ## User Needs Assessment: UI/UX Changes:
 
