@@ -91,6 +91,13 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
   - Review and confirm data to be sent
 - Access a separate table to view all data shared with you or shared with other Solid users.
 
+# Funding
+
+This project is funded through [NGI0 Entrust](https://nlnet.nl/entrust), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/Fleetbase-Solid).
+
+[<img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" width="20%" />](https://nlnet.nl)
+[<img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" width="20%" />](https://nlnet.nl/entrust)
+
 # Conclusion:
 
 Solid offers a robust foundation for developing innovative logistics solutions that prioritize data ownership, interoperability, and collaboration. By leveraging Solid's capabilities and addressing specific user needs through UI/UX enhancements, logistics stakeholders can unlock new levels of efficiency, transparency, and value creation in supply chain management.
