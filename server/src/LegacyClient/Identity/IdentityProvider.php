@@ -1,29 +1,22 @@
 <?php
 
-namespace Fleetbase\Solid\Client\Identity;
+namespace Fleetbase\Solid\LegacyClient\Identity;
 
 use EasyRdf\Graph;
-use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Client\OIDCClient;
+use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Support\Utils;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Str;
 use Jumbojett\OpenIDConnectClientException;
 
 class IdentityProvider
 {
     /**
      * The Solid client instance.
-     *
-     * @var SolidClient
      */
     private SolidClient $solidClient;
 
     /**
      * The OIDC client instance for handling OpenID Connect authentication.
-     *
-     * @var OIDCClient
      */
     private OIDCClient $oidcClient;
 
@@ -50,18 +43,18 @@ class IdentityProvider
     /**
      * Constructs a new IdentityProvider instance.
      *
-     * @param SolidClient $solidClient The Solid client instance.
+     * @param SolidClient $solidClient the Solid client instance
      */
     public function __construct(SolidClient $solidClient)
     {
         $this->solidClient = $solidClient;
-        $this->oidcClient = OIDCClient::create($solidClient);
+        $this->oidcClient  = OIDCClient::create($solidClient);
     }
 
     /**
      * Gets the OIDC client instance.
      *
-     * @return OIDCClient The OIDC client instance.
+     * @return OIDCClient the OIDC client instance
      */
     public function getOidcClient(): OIDCClient
     {
@@ -75,9 +68,10 @@ class IdentityProvider
     /**
      * Magic method to delegate method calls to either IdentityProvider or OIDCClient.
      *
-     * @param string $name The name of the method being called.
-     * @param array $arguments The arguments passed to the method.
-     * @return mixed The result of the method call.
+     * @param string $name      the name of the method being called
+     * @param array  $arguments the arguments passed to the method
+     *
+     * @return mixed the result of the method call
      */
     public function __call(string $name, $arguments)
     {
@@ -92,15 +86,31 @@ class IdentityProvider
         throw new \BadMethodCallException("Method {$name} does not exist.");
     }
 
-    public function registerClient(string $clientName, array $params = []): self
+    public function registerClient(array $options = []): self
     {
-        $oidcConfig = $this->solidClient->getOpenIdConfiguration();
-        $registrationUrl = data_get($oidcConfig, 'registration_endpoint');
-        $response = $this->solidClient->post($registrationUrl, ['client_name' => $clientName, 'redirect_uris' => [url('solid/int/v1/oidc/complete-registration')], ...$params]);
+        // Get registration options
+        $clientName     = data_get($options, 'clientName', $this->oidcClient::CLIENT_NAME);
+        $requestParams  = data_get($options, 'requestParams', []);
+        $requestOptions = data_get($options, 'requestOptions', []);
+        $redirectUri    = data_get($options, 'redirectUri');
+        if (!$redirectUri) {
+            $requestCode = data_get($options, 'requestCode');
+            $redirectUri = Utils::apiUrl('solid/int/v1/oidc/complete-registration' . $requestCode ? '/' . $requestCode : '', [], 8000);
+        }
+        $withResponse   = data_get($options, 'withResponse');
 
+        // Get OIDC Config and Registration URL
+        $oidcConfig      = $this->solidClient->getOpenIdConfiguration();
+        $registrationUrl = data_get($oidcConfig, 'registration_endpoint');
+
+        // Request registration for Client which should handle authentication
+        $response = $this->solidClient->post($registrationUrl, ['client_name' => $clientName, 'redirect_uris' => [$redirectUri], ...$requestParams], ['withoutAuth' => true, ...$requestOptions]);
         if ($response->successful()) {
             $clientCredentials = $response->json();
             $this->setClientCredentials($clientName, $clientCredentials);
+            if (is_callable($withResponse)) {
+                $withResponse($clientCredentials);
+            }
         } else {
             throw new OpenIDConnectClientException('Error registering: Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them');
         }
@@ -108,57 +118,29 @@ class IdentityProvider
         return $this;
     }
 
-    private function setClientCredentials(string $clientName, $clientCredentials): ?self
+    public function getClient(array $options = [])
     {
-        $clientId = data_get($clientCredentials, 'client_id');
-        $clientSecret = data_get($clientCredentials, 'client_secret');
-
-        $this->setClientName($clientName);
-        $this->setClientID($clientId);
-        $this->setClientSecret($clientSecret);
-        $this->storeClientCredentials($clientName, $clientCredentials);
-
-        return $this;
-    }
-
-    private function storeClientCredentials(string $clientName, $clientCredentials): void
-    {
-        Redis::set('oidc:client:' . Str::slug($clientName), json_encode($clientCredentials));
-    }
-
-    public function _getClientCredentials($clientName)
-    {
-        $clientCredentialsString = Redis::get('oidc:client:' . Str::slug($clientName));
-
-        if (Utils::isJson($clientCredentialsString)) {
-            return json_decode($clientCredentialsString, false);
+        $clientName     = data_get($options, 'clientName', $this->oidcClient::CLIENT_NAME);
+        $restoredClient = $this->restoreClientCredentials($clientName);
+        if ($restoredClient === null) {
+            return $this->registerClient($options);
         }
 
-        return null;
-    }
-
-    public function restoreClientCredentials(string $clientName): ?self
-    {
-        $clientCredentials = $this->_getClientCredentials($clientName);
-
-        if ($clientCredentials) {
-            return $this->setClientCredentials($clientName, $clientCredentials);
-        }
-
-        return null;
+        return $restoredClient;
     }
 
     /**
      * Retrieves the WebID profile of a user as an RDF graph.
      *
-     * @param string $webId The WebID of the user.
-     * @param array $options Additional options for the request.
-     * @return Graph The user's WebID profile as an RDF graph.
+     * @param string $webId   the WebID of the user
+     * @param array  $options additional options for the request
+     *
+     * @return Graph the user's WebID profile as an RDF graph
      */
     public function getWebIdProfile(string $webId, array $options = []): Graph
     {
         $response = $this->solidClient->get($webId, $options);
-        $format = $response->header('Content-Type');
+        $format   = $response->header('Content-Type');
 
         if ($format) {
             // strip parameters (such as charset) if any
@@ -171,14 +153,16 @@ class IdentityProvider
     /**
      * Retrieves the OIDC issuer URL from a WebID profile.
      *
-     * @param string $webId The WebID of the user.
-     * @param array $options Additional options for the request.
-     * @return string The OIDC issuer URL.
-     * @throws \Exception If the OIDC issuer cannot be found.
+     * @param string $webId   the WebID of the user
+     * @param array  $options additional options for the request
+     *
+     * @return string the OIDC issuer URL
+     *
+     * @throws \Exception if the OIDC issuer cannot be found
      */
     public function getOidcIssuer(string $webId, array $options = []): string
     {
-        $graph = $this->getWebIdProfile($webId, $options);
+        $graph  = $this->getWebIdProfile($webId, $options);
         $issuer = $graph->get($webId, sprintf('<%s>', self::OIDC_ISSUER))->getUri();
 
         if (!\is_string($issuer)) {

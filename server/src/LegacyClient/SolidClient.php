@@ -1,7 +1,9 @@
 <?php
 
-namespace Fleetbase\Solid\Client;
+namespace Fleetbase\Solid\LegacyClient;
 
+use EasyRdf\Graph;
+use Fleetbase\Solid\Client\Identity\IdentityProvider;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -9,11 +11,28 @@ use Illuminate\Support\Str;
 
 class SolidClient
 {
+    /**
+     * The host of the Solid server.
+     */
     private string $host = 'localhost';
-    private int $port    = 3000;
+
+    /**
+     * The port on which the Solid server is running.
+     */
+    private int $port = 3000;
+
+    /**
+     * Indicates whether the connection to the Solid server should be secure (HTTPS).
+     */
     private bool $secure = true;
-    public ?SolidIdentity $solidIdentity;
-    public ?OpenIDConnectClient $oidc;
+
+    /**
+     * The identity provider for authentication with the Solid server.
+     */
+    public IdentityProvider $identity;
+
+    public bool $identityProviderInitialized = false;
+
     private const DEFAULT_MIME_TYPE   = 'text/turtle';
     private const LDP_BASIC_CONTAINER = 'http://www.w3.org/ns/ldp#BasicContainer';
     private const LDP_RESOURCE        = 'http://www.w3.org/ns/ldp#Resource';
@@ -28,11 +47,20 @@ class SolidClient
      */
     public function __construct(array $options = [])
     {
-        $this->identity = data_get($options, 'identity');
-        $this->host     = config('solid.server.host', data_get($options, 'host'));
-        $this->port     = (int) config('solid.server.port', data_get($options, 'port'));
-        $this->secure   = (bool) config('solid.server.secure', data_get($options, 'secure'));
-        $this->oidc     = OpenIDConnectClient::create(['solid' => $this, ...$options]);
+        $this->host   = config('solid.server.host', data_get($options, 'host'));
+        $this->port   = (int) config('solid.server.port', data_get($options, 'port'));
+        $this->secure = (bool) config('solid.server.secure', data_get($options, 'secure'));
+        $this->initializeIdentityProvider($options);
+    }
+
+    private function initializeIdentityProvider(array $options = []): IdentityProvider
+    {
+        $this->identity = new IdentityProvider($this);
+        if (isset($options['restore']) && is_string($options['restore'])) {
+            $this->identity->restoreClientCredentials($options['restore']);
+        }
+
+        return $this->identity;
     }
 
     /**
@@ -72,11 +100,8 @@ class SolidClient
      */
     private function createRequestUrl(string $uri = null): string
     {
-        if (Str::startsWith($uri, 'http')) {
-            return $uri;
-        }
-
         $url = $this->getServerUrl();
+
         if (is_string($uri)) {
             $uri = '/' . ltrim($uri, '/');
             $url .= $uri;
@@ -86,13 +111,43 @@ class SolidClient
     }
 
     /**
-     * Set the identity to use for authenticated request.
+     * Sets the necessary authentication headers for the request.
+     *
+     * This function adds authentication headers to the provided options array.
+     * It includes an Authorization header with a DPoP token if an access token is available.
+     * It also generates a DPoP header based on the request method and URL.
+     *
+     * @param array  &$options The array of options for the HTTP request, passed by reference
+     * @param string $method   The HTTP method of the request (e.g., 'GET', 'POST').
+     * @param string $url      the full URL of the request
+     *
+     * @return array the modified options array with added authentication headers
      */
-    public function withIdentity(SolidIdentity $identity): SolidClient
+    private function setAuthenticationHeaders(array &$options, string $method, string $url)
     {
-        $this->identity = $identity;
+        $withoutAuth = data_get($options, 'withoutAuth', false);
+        if ($withoutAuth) {
+            return $options;
+        }
 
-        return $this;
+        $useCssAuth  = data_get($options, 'useCssAuth', false);
+        $useDpopAuth = data_get($options, 'useDpopAuth', true);
+        $headers     = data_get($options, 'headers', []);
+        $accessToken = isset($this->identity) ? $this->identity->getAccessToken() : null;
+        if ($accessToken) {
+            if ($useDpopAuth) {
+                $headers['Authorization'] = 'DPoP ' . $accessToken;
+                $headers['DPoP']          = $this->identity->createDPoP($method, $url, true);
+            }
+
+            if ($useCssAuth) {
+                $headers['Authorization'] = 'CSS-Account-Token ' . $accessToken;
+            }
+        }
+
+        $options['headers'] = $headers;
+
+        return $options;
     }
 
     /**
@@ -104,28 +159,35 @@ class SolidClient
      */
     protected function request(string $method, string $uri, array $data = [], array $options = []): Response
     {
-        $url = $this->createRequestUrl($uri);
-
+        if (Str::startsWith($uri, 'http')) {
+            $url = $uri;
+        } else {
+            $url = $this->createRequestUrl($uri);
+        }
+        $this->setAuthenticationHeaders($options, $method, $url);
         return Http::withOptions($options)->{$method}($url, $data);
     }
 
-    /**
-     * Send an authenticated request with the current identity.
-     */
-    public function authenticatedRequest(string $method, string $uri, array $data = [], array $options = []): Response
+    public function requestWithIdentity(SolidIdentity $solidIdentity, string $method, string $uri, array $data = [], array $options = [])
     {
-        if (!$this->identity) {
-            throw new \Exception('Solid Identity required to make an authenticated request.');
+        if (Str::startsWith($uri, 'http')) {
+            $url = $uri;
+        } else {
+            $url = $this->createRequestUrl($uri);
         }
 
-        $url         = $this->createRequestUrl($uri);
-        $accessToken = $this->identity->getAccessToken();
+        // prepare headers
+        if (!isset($options['headers']) || !is_array($options['headers'])) {
+            $options['headers'] = [];
+        }
+
+        $accessToken = $solidIdentity->getAccessToken();
         if ($accessToken) {
-            $options['headers']                  = is_array($options['headers']) ? $options['headers'] : [];
             $options['headers']['Authorization'] = 'DPoP ' . $accessToken;
-            $options['headers']['DPoP']          = OpenIDConnectClient::createDPoP($method, $url, $accessToken);
+            $options['headers']['DPoP']          = $this->identity->createDPoP($method, $url, true, $accessToken);
         }
 
+        // dump($options);
         return Http::withOptions($options)->{$method}($url, $data);
     }
 
@@ -182,5 +244,27 @@ class SolidClient
     public function delete(string $uri, array $data = [], array $options = []): Response
     {
         return $this->request('delete', $uri, $data, $options);
+    }
+
+    public function getProfile(string $webId, array $options = []): Graph
+    {
+        $response = $this->get($webId, $options);
+        if (null !== $format = $response->getHeaders()['content-type'][0] ?? null) {
+            // strip parameters (such as charset) if any
+            $format = explode(';', $format, 2)[0];
+        }
+
+        return new Graph($webId, $response->getContent(), $format);
+    }
+
+    public function getOpenIdConfiguration()
+    {
+        $response = $this->get('.well-known/openid-configuration', [], ['withoutAuth' => true]);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        throw $response->toException();
     }
 }

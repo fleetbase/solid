@@ -28,11 +28,16 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
                 $router->group(
                     ['prefix' => 'v1'],
                     function ($router) {
+                        $router->get('authenticate/{identifier}', 'SolidController@authenticate');
                         $router->group(['middleware' => ['fleetbase.protected']], function ($router) {
+                            $router->get('account', 'SolidController@getAccountIndex');
+                            $router->get('request-authentication', 'SolidController@requestAuthentication');
+                            $router->get('server-config', 'SolidController@getServerConfig');
+                            $router->post('server-config', 'SolidController@saveServerConfig');
                         });
 
                         $router->group(['prefix' => 'oidc'], function ($router) {
-                            $router->any('complete-registration', 'OIDCController@completeRegistration');
+                            $router->any('complete-registration/{identifier}', 'OIDCController@completeRegistration');
                         });
                     }
                 );

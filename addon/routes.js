@@ -1,3 +1,3 @@
 import buildRoutes from 'ember-engines/routes';
 
-export default buildRoutes();
+export default buildRoutes(function () {});
