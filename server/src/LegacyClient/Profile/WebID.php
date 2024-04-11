@@ -1,6 +1,6 @@
 <?php
 
-namespace Fleetbase\Solid\Client\Profile;
+namespace Fleetbase\Solid\LegacyClient\Profile;
 
 class WebID
 {

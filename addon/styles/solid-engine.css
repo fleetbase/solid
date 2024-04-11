@@ -1,0 +1,29 @@
+.solid-fleetbase-home-container {
+    margin: auto;
+    width: 1200px;
+    padding: 2rem;
+}
+
+.solid-fleetbase-home-container h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.solid-fleetbase-home-container h2 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+body[data-theme='light'] .solid-fleetbase-home-container a:not([class*='text-']),
+body[data-theme='dark'] .solid-fleetbase-home-container a:not([class*='text-']),
+.solid-fleetbase-home-container a {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-decoration-line: underline;
+}
+
+.solid-fleetbase-home-container a:hover {
+    opacity: 0.5;
+}

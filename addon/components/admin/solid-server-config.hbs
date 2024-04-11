@@ -1,0 +1,19 @@
+{{#if this.configLoaded}}
+    <ContentPanel @title="Solid Server Config" @open={{true}} @pad={{true}} @panelBodyClass="bg-white dark:bg-gray-800 mb-4">
+        <InputGroup @name="Server Host" @value={{this.host}} @placeholder="solid.myserver.com" />
+        <InputGroup @name="Server Port" @value={{this.port}} @placeholder="3000" />
+        <InputGroup>
+            <Toggle @isToggled={{this.secure}} @onToggle={{fn (mut this.secure)}}>
+                <span class="dark:text-gray-100 text-sm ml-2">Secure Server</span>
+            </Toggle>
+        </InputGroup>
+    </ContentPanel>
+
+    <div class="mt-3 flex items-center justify-end">
+        <Button @type="primary" @size="lg" @icon="save" @text={{t "common.save-changes"}} @onClick={{perform this.saveServerConfig}} @disabled={{not this.saveServerConfig.isIdle}} @isLoading={{not this.saveServerConfig.isIdle}} />
+    </div>
+{{else}}
+    <div class="flex items-center justify-center">
+        <Spinner @loadingMessage="Loading server config..." />
+    </div>
+{{/if}}

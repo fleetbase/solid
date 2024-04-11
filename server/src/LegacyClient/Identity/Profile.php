@@ -1,6 +1,6 @@
 <?php
 
-namespace Fleetbase\Solid\Client\Identity;
+namespace Fleetbase\Solid\LegacyClient\Identity;
 
 use EasyRdf\Graph;
 
@@ -15,5 +15,4 @@ class Profile
     {
         $this->graph = $graph;
     }
-
 }
