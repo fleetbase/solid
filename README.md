@@ -88,7 +88,7 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
 
 ![image](https://github.com/fleetbase/solid/assets/58805033/dcfe2953-71d4-41c0-9243-36811b52017e)
 
-Next steps would be to continue to update the UI from feedback and also conduct thourough testing and documentation. 
+Next steps would be to continue to update the UI from feedback and also conduct thorough testing and documentation. UI enhancements will be things like viewing the specific pods created as well as last synced. 
 
 ### Features:
 
