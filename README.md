@@ -69,6 +69,27 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
 - Authorize fleetbase.io to access your Pod. 
 - Solid allows precise control over data access permissions. Note: The current UI version (node-solid-server V5.1) supports toggling global access permissions only. If you prefer granular control, uncheck all boxes and authorize. Then, manage permissions explicitly.
 
+### Fleetbase UI Updates 
+
+- As per the latest release, this is the updated UI screenshots for Fleetbase for users to manage pods.
+
+- You can see the full release details here: https://github.com/fleetbase/solid/pull/2
+
+- Install Solid Extension and click link: 'Sign up for an account' This will take you to Solid to create your own Solid Server & Pods,
+
+![image](https://github.com/fleetbase/solid/assets/58805033/e4cf882a-d04f-4abd-9107-e04cb0a47949)
+
+- Once you head to this link, you can create your own Solid Server. You should be able to generate as per the Screenshot:
+
+<img width="1134" alt="image" src="https://github.com/fleetbase/solid/assets/58805033/97015745-a1a6-487a-a958-fe97d0a7bca7">
+
+
+- Input your Solid Server details directly into Fleetbase in company admin settings
+
+![image](https://github.com/fleetbase/solid/assets/58805033/dcfe2953-71d4-41c0-9243-36811b52017e)
+
+Next steps would be to continue to update the UI from feedback and also conduct thourough testing and documentation. 
+
 ### Features:
 
 - Ability to link Fleetbase account with Solid Web ID later via user settings.
