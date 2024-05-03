@@ -61,6 +61,7 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
 - Input their server 
 - Input their solid ID on the server 
 - Once installed, users signing up or added to the company within this instance can utilize Solid for data management.
+- More info: The interface which allows the instance administrator to link the Fleetbase Solid extension to the Solid server of their preference. Due to the nature of how Solid is built on an identity basis, and Fleetbase is built as a multi-tenant platform. Each organization on Fleetbase when accessing the instance will be prompted to link their Solid OIDC account [https://github.com/fleetbase/solid/blob/main/addon/controllers/application.js#L16] to their Fleetbase organization per the instance. Once linked all data synced between Solid and Fleetbase will be via the SolidIdentity [https://github.com/fleetbase/solid/blob/main/server/src/Models/SolidIdentity.php]
 
 ### User Authentication and Account Creation:
 
