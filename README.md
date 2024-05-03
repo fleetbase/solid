@@ -93,6 +93,8 @@ Next steps would be to continue to update the UI from feedback and also conduct 
 
 ### Features:
 
+Fleetbase has implemented a Solid Client which implements the Standard Solid authentication methods to communicate with the server. The Fleetbase SolidClient is able to communicate securely with the Solid protocol using the Standard DPoP encryption method for authentication provided by the Solid specification (https://solidproject.org/TR/oidc#tokens-id)
+
 - Ability to link Fleetbase account with Solid Web ID later via user settings.
 - View and manage data stored on Solid Pod:
   - Orders
