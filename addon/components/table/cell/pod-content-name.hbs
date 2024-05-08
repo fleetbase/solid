@@ -1,0 +1,8 @@
+<a href="#" {{on "click" this.onClick}} class={{@column.anchorClass}} disabled={{not @value}} ...attributes>
+    {{#if (has-block)}}
+        {{yield}}
+    {{else}}
+        <FaIcon @icon={{@row.type}} @size="xs" class="mr-1" />
+        <span class={{@column.anchorSpanClass}}>{{or @value @column.anchorText "-"}}</span>
+    {{/if}}
+</a>

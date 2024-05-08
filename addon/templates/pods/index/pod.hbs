@@ -1,0 +1,11 @@
+<Overlay @isOpen={{true}} @onLoad={{this.setOverlayContext}} @position="right" @noBackdrop={{true}} @fullHeight={{true}} @width="600px" @isResizable={{true}}>
+    <Overlay::Header @title="Pod" @hideStatusDot={{true}} @titleWrapperClass="leading-5">
+        <div class="flex flex-1 justify-end">
+            <Button @type="default" @icon="times" @helpText={{t "common.close"}} @onClick={{this.onPressClose}} />
+        </div>
+    </Overlay::Header>
+
+    <Overlay::Body class="without-padding">
+        
+    </Overlay::Body>
+</Overlay>

@@ -98,7 +98,7 @@ class SolidClient
      *
      * @return string the fully constructed URL
      */
-    private function createRequestUrl(string $uri = null): string
+    private function createRequestUrl(?string $uri = null): string
     {
         $url = $this->getServerUrl();
 
@@ -165,6 +165,7 @@ class SolidClient
             $url = $this->createRequestUrl($uri);
         }
         $this->setAuthenticationHeaders($options, $method, $url);
+
         return Http::withOptions($options)->{$method}($url, $data);
     }
 

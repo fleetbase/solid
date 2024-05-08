@@ -28,6 +28,7 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
                 $router->group(
                     ['prefix' => 'v1'],
                     function ($router) {
+                        $router->get('pods', 'SolidController@getPods');
                         $router->get('authenticate/{identifier}', 'SolidController@authenticate');
                         $router->group(['middleware' => ['fleetbase.protected']], function ($router) {
                             $router->get('account', 'SolidController@getAccountIndex');

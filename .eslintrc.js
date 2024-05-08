@@ -16,6 +16,10 @@ module.exports = {
     env: {
         browser: true,
     },
+    globals: {
+        socketClusterClient: 'readonly',
+        L: 'readonly',
+    },
     rules: {
         'ember/no-array-prototype-extensions': 'off',
         'ember/no-computed-properties-in-native-classes': 'off',
@@ -27,7 +31,7 @@ module.exports = {
         'n/no-unpublished-require': [
             'error',
             {
-                allowModules: ['resolve', 'broccoli-funnel'],
+                allowModules: ['resolve'],
             },
         ],
     },
