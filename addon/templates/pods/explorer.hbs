@@ -1,0 +1,20 @@
+<ExplorerHeader @current={{@model.id}} @pod={{this.pod}} @onStateClicked={{this.viewContents}} @searchPlaceholder="Search Contents" @searchQuery={{this.query}} @onSearch={{perform this.search}}>
+    <Button @icon="arrow-left" @onClick={{this.back}} @helpText="Go Back" class="mr-2" />
+    <Button @icon="refresh" @onClick={{this.reload}} @helpText="Refresh" class="mr-2" />
+    {{#if (safe-has this.table "selectedRows")}}
+        <DropdownButton @icon="layer-group" @text="Bulk Action" @type="magic" @size="sm" @buttonWrapperClass="mr-2" @contentClass="dropdown-menu" as |dd|>
+            <div class="next-dd-menu mt-2 mx-0">
+                <div class="px-1">
+                    <a href="#" class="text-red-500 next-dd-item" {{on "click" (dropdown-fn dd this.deleteSelected)}}>
+                        Delete Selected Items
+                    </a>
+                </div>
+            </div>
+        </DropdownButton>
+    {{/if}}
+    <Button @icon="plus" @iconPrefix="fas" @type="primary" @text="Create new Something" class="mr-2" @onClick={{this.createSomething}} />
+</ExplorerHeader>
+<Layout::Section::Body>
+    <Table @rows={{@model.contents}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} @tfootVerticalOffset="53" @tfootVerticalOffsetElements=".next-view-section-subheader" />
+</Layout::Section::Body>
+{{outlet}}

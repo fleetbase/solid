@@ -27,3 +27,49 @@ body[data-theme='dark'] .solid-fleetbase-home-container a:not([class*='text-']),
 .solid-fleetbase-home-container a:hover {
     opacity: 0.5;
 }
+
+.pod-explorer-breadcrumb-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.pod-explorer-breadcrumb-container > .pod-explorer-breadcrumb:first-child {
+    border-top-left-radius: 0.75rem;
+    border-bottom-left-radius: 0.75rem;
+}
+
+.pod-explorer-breadcrumb-container > .pod-explorer-breadcrumb:last-child {
+    border-top-right-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+}
+
+.pod-explorer-breadcrumb {
+    font-size: 0.85rem;
+    border: 1px #111827 solid;
+    padding: 0 0.75rem;
+    line-height: 1.75rem;
+    background-color: #1f2937;
+    color: #fff;
+}
+
+.pod-explorer-breadcrumb:hover {
+    opacity: 0.75;
+}
+
+.pod-explorer-breadcrumb.active-breadcrumb {
+    background-color: #2563eb;
+    color: #eff6ff;
+}
+
+body[data-theme='light'] .pod-explorer-breadcrumb {
+    border: 1px #e5e7eb solid;
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+
+body[data-theme='light'] .pod-explorer-breadcrumb.active-breadcrumb {
+    background-color: #3b82f6;
+    color: #eff6ff;
+    border-color: #2563eb;
+}

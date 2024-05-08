@@ -70,7 +70,7 @@ class SolidClient
      *
      * @return string the fully constructed URL
      */
-    private function createRequestUrl(string $uri = null): string
+    private function createRequestUrl(?string $uri = null): string
     {
         if (Str::startsWith($uri, 'http')) {
             return $uri;

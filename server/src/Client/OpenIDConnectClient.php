@@ -86,7 +86,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return parent::authenticate();
     }
 
-    private function setClientCredentials(string $clientName = CLIENT_NAME, $clientCredentials, bool $save = false, \Closure $callback = null): OpenIDConnectClient
+    private function setClientCredentials(string $clientName = CLIENT_NAME, $clientCredentials, bool $save = false, ?\Closure $callback = null): OpenIDConnectClient
     {
         $this->setClientID($clientCredentials->client_id);
         $this->setClientName($clientCredentials->client_name);
@@ -156,7 +156,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return $value;
     }
 
-    public function getOpenIdConfiguration(string $key = null)
+    public function getOpenIdConfiguration(?string $key = null)
     {
         $openIdConfigResponse = $this->solid->get('.well-known/openid-configuration');
         if ($openIdConfigResponse instanceof Response) {

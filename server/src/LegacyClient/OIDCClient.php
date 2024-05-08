@@ -141,7 +141,7 @@ final class OIDCClient extends OpenIDConnectClient
         return rtrim($url, '=');
     }
 
-    public function createDPoP(string $method, string $url, bool $includeAth = true, string $accessToken = null): string
+    public function createDPoP(string $method, string $url, bool $includeAth = true, ?string $accessToken = null): string
     {
         if (null === $this->dpopPrivateKey) {
             $this->dpopPrivateKey = JWKFactory::createECKey('P-256', ['use' => 'sig', 'kid' => base64_encode(random_bytes(20))]);

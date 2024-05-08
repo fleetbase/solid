@@ -1,27 +1,30 @@
 import Controller from '@ember/controller';
 import { inject as service } from '@ember/service';
-import { task } from 'ember-concurrency';
+import { tracked } from '@glimmer/tracking';
+import { task, timeout } from 'ember-concurrency';
 
 export default class ApplicationController extends Controller {
-    @service universe;
     @service fetch;
+    @service appCache;
+    @tracked pods = [];
 
     constructor() {
         super(...arguments);
-        this.universe.on('sidebarContext.available', (sidebarContext) => {
-            sidebarContext.hideNow();
-        });
+        this.getPods.perform();
     }
 
-    @task *authenticate() {
-        const { authenticationUrl, identifier } = yield this.fetch.get('request-authentication', {}, { namespace: 'solid/int/v1' });
-        if (authenticationUrl) {
-            window.location.href = `${authenticationUrl}/${identifier}`;
+    @task *getPods() {
+        yield timeout(600);
+
+        if (this.appCache.has('solid:pods')) {
+            this.pods = this.appCache.get('solid:pods', []);
+            return;
         }
-    }
 
-    @task *getAccountIndex() {
-        const response = yield this.fetch.get('account', {}, { namespace: 'solid/int/v1' });
-        console.log('[response]', response);
+        try {
+            this.pods = yield this.fetch.get('pods', {}, { namespace: 'solid/int/v1' });
+        } catch (error) {
+            // silence
+        }
     }
 }
