@@ -161,24 +161,6 @@ Next: We will continue work on completing the Sold <> Fleetbase integration wi
 Fleetbase has implemented a Solid Client which implements the Standard Solid authentication methods to communicate with the server. The Fleetbase SolidClient is able to communicate securely with the Solid protocol using the Standard DPoP encryption method for authentication provided by the Solid specification (https://solidproject.org/TR/oidc#tokens-id)
 
 - Ability to link Fleetbase account with Solid Web ID later via user settings.
-- View and manage data stored on Solid Pod:
-  - Orders
-  - Payload
-  - Entity
-  - Service Quote
-  - Purchase Rate
-- Retrieve list of Solid Pods approved to receive data.
-- Ability to add approved pods to send order data too (Verification Process)
-- View order details 
-- Send order details 
-- Select Pod to send order details too 
-- Send order details to Solid partners:
-  - View Order
-  - Send Order
-  - Select from Dropdown of Solid Partners
-  - Confirmation popup for sending data
-  - Review and confirm data to be sent
-- Access a separate table to view all data shared with you or shared with other Solid users.
 
 # Funding
 
