@@ -118,6 +118,8 @@ Fleetbase Solid ExtensionThis guide provides detailed instructions for integrati
 6.​​ Navigate to ‘Account’ in Fleetbase
 - Once your Web ID is set up:Go back to Fleetbase and navigate to the ‘Account’ section. Your User details should be pulled in automatically if properly configured.
 
+![image](https://github.com/fleetbase/solid/assets/58805033/4d3d3090-1e3e-49e6-babc-f1c3db205080)
+
 7.​​ Navigate to PodsTo manage your Pods:
  - In Fleetbase, find and navigate to the ‘Pods’ section after linking your Solid account.
 
