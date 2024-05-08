@@ -72,24 +72,87 @@ Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groun
 
 ### Fleetbase UI Updates 
 
-- As per the latest release, this is the updated UI screenshots for Fleetbase for users to manage pods.
+Developer/User Guide: 
 
-- You can see the full release details here: https://github.com/fleetbase/solid/pull/2
+Fleetbase Solid ExtensionThis guide provides detailed instructions for integrating the Solid extension with your Fleetbase account. Solid is an innovative technology that lets users store their own data in personal online data stores, called "Pods," that they control. By using the Solid extension on Fleetbase, users can manage their data directly through the Fleetbase interface.
 
-- Install Solid Extension and click link: 'Sign up for an account' This will take you to Solid to create your own Solid Server & Pods,
+1. Create a New Fleetbase Account
+- If you don't already have a Fleetbase account, you'll need to create one:
 
-![image](https://github.com/fleetbase/solid/assets/58805033/e4cf882a-d04f-4abd-9107-e04cb0a47949)
+- Go to the Fleetbase website
+- Click on "Sign Up" and follow the registration process.
+- Verify your account as required.
 
-- Once you head to this link, you can create your own Solid Server. You should be able to generate as per the Screenshot:
+![image](https://github.com/fleetbase/solid/assets/58805033/8dd8084c-5007-420e-b235-b46848cbe884)
 
-<img width="1134" alt="image" src="https://github.com/fleetbase/solid/assets/58805033/97015745-a1a6-487a-a958-fe97d0a7bca7">
+2. Install the Solid Extension
+- Once your Fleetbase account is active, follow these steps to install the Solid extension:
+
+- Log in to your Fleetbase dashboard.Navigate to the Extensions section.
+- Find the Solid extension and click "Install."Fleetbase Extensions Registry will be launching Q3 2024
+
+3. Admin Configuration
+- As an admin, you need to set up the Solid server for your organization:
+
+- After installation, navigate to Admin so you can configure the Solid extension settings.
+- Input the Solid server ID where your organization's data will be stored. This might be a private server or a service like solidcommunity.net
+
+![image](https://github.com/fleetbase/solid/assets/58805033/a9324b10-f963-4a41-89c8-9ed574b450b5)
 
 
-- Input your Solid Server details directly into Fleetbase in company admin settings
+4. Get Started with Solid
+- Users must individually sign up for a Solid account:
 
-![image](https://github.com/fleetbase/solid/assets/58805033/dcfe2953-71d4-41c0-9243-36811b52017e)
+- Click ‘Sign up for an account’ or Visit https://solidcommunity.net/register or your organization's own Solid server.
+- Complete the registration process to create a new Solid account.
 
-Next steps would be to continue to update the UI from feedback and also conduct thorough testing and documentation. UI enhancements will be things like viewing the specific pods created as well as last synced. 
+![image](https://github.com/fleetbase/solid/assets/58805033/2bbc7406-ae08-4500-afb0-b52af675110b)
+
+5.​​ Retrieve Your Web ID
+- Your Web ID is your unique identifier in the Solid ecosystem:
+
+- After registering, your Web ID will typically be displayed on your Solid dashboard.Note this Web ID as it will be used to link your Solid account with Fleetbase.
+
+![image](https://github.com/fleetbase/solid/assets/58805033/1ef66dfd-fe19-4795-b1bf-3d16ba7e65f8)
+
+6.​​ Navigate to ‘Account’ in Fleetbase
+- Once your Web ID is set up:Go back to Fleetbase and navigate to the ‘Account’ section. Your User details should be pulled in automatically if properly configured.
+
+7.​​ Navigate to PodsTo manage your Pods:
+ - In Fleetbase, find and navigate to the ‘Pods’ section after linking your Solid account.
+
+![image](https://github.com/fleetbase/solid/assets/58805033/bcc83875-e4ed-4ae1-be83-6044eefe323e)
+
+8.​​ Create a New POD
+- Here’s how to create a new POD:
+
+- Click “Create New POD.”Enter a name for your POD and submit.
+
+![image](https://github.com/fleetbase/solid/assets/58805033/2677491c-7de3-4592-9f30-80448e818ff6)
+
+9.​​ Manage Files/Folders in PODs
+- To access and manage data within a POD:
+
+- Click into the POD you wish to view.
+- You’ll see files and folders stored in this POD
+
+![image](https://github.com/fleetbase/solid/assets/58805033/e04e151a-d640-4e29-a91a-a6f09347e59d)
+
+10. Operations on PODsSelect 
+
+- Box Delete: To delete files or folders, select them and use the delete option.
+- Re-sync / Back Up the PODs: To ensure your data is up-to-date, use the re-sync option to resynchronize the data in the POD.
+
+![image](https://github.com/fleetbase/solid/assets/58805033/1f5ef3a8-bed8-476b-b176-cdd19b6212cd)
+
+11. View Data in Pods
+- To view specific data within a POD:
+
+- Simply click on the file or folder you are interested in within the POD interface in Fleetbase.
+
+![image](https://github.com/fleetbase/solid/assets/58805033/55f8af9b-f82b-406d-9434-50404c282740)
+
+Next: We will continue work on completing the Sold <> Fleetbase integration with the following Further User Interface (UI) Enhancement for renaming Pods. Extensive User testing / bug fixes and production release. 
 
 ### Features:
 
