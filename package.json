@@ -1,6 +1,6 @@
 {
     "name": "@fleetbase/solid-engine",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "fleetbase": {
         "route": "solid-protocol"
@@ -19,7 +19,7 @@
         "ember-engine"
     ],
     "repository": "https://github.com/fleetbase/solid",
-    "license": "MIT",
+    "license": "AGPL-3.0-or-later",
     "author": "Fleetbase Pte Ltd <hello@fleetbase.io>",
     "directories": {
         "app": "app",
@@ -45,8 +45,8 @@
     },
     "dependencies": {
         "@babel/core": "^7.23.2",
-        "@fleetbase/ember-core": "^0.2.9",
-        "@fleetbase/ember-ui": "^0.2.13",
+        "@fleetbase/ember-core": "^0.2.11",
+        "@fleetbase/ember-ui": "^0.2.17",
         "@fleetbase/fleetops-data": "^0.1.14",
         "@fortawesome/ember-fontawesome": "^0.4.1",
         "@fortawesome/fontawesome-svg-core": "^6.4.0",
