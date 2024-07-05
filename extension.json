@@ -1,8 +1,8 @@
 {
     "name": "Solid",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "repository": "https://github.com/fleetbase/solid",
-    "license": "MIT",
+    "license": "AGPL-3.0-or-later",
     "author": "Fleetbase Pte Ltd <hello@fleetbase.io>"
 }
