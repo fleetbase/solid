@@ -1,5 +1,68 @@
 <Modal::Default @modalIsOpened={{@modalIsOpened}} @options={{@options}} @confirm={{@onConfirm}} @decline={{@onDecline}}>
     <div class="modal-body-container">
-        <InputGroup @name="Pod Name" @value={{@options.pod.name}} @helpText="Input a name for your new Pod" />
+        <form>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Pod Name <span class="text-red-500">*</span>
+                    </label>
+                    <Input 
+                        @value={{@options.pod.name}} 
+                        placeholder="Enter pod name (e.g., 'Fleet Vehicles', 'Delivery Data')"
+                        class="form-input w-full"
+                        required
+                    />
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Choose a descriptive name for your pod. This will be used to organize your data.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description (Optional)
+                    </label>
+                    <Textarea 
+                        @value={{@options.pod.description}} 
+                        placeholder="Describe what this pod will contain..."
+                        class="form-input w-full"
+                        rows="3"
+                    />
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Add a description to help you remember what this pod is for.
+                    </p>
+                </div>
+
+                {{#if this.requestPodCreation.isRunning}}
+                    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <Spinner class="mr-3" />
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Creating Pod</h4>
+                                <p class="text-sm text-blue-700 dark:text-blue-300">Setting up your new pod on the Solid server...</p>
+                            </div>
+                        </div>
+                    </div>
+                {{/if}}
+
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">What happens next?</h4>
+                    <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <li class="flex items-start">
+                            <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                            A new container will be created in your Solid pod
+                        </li>
+                        <li class="flex items-start">
+                            <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                            You can sync Fleetbase data to this pod
+                        </li>
+                        <li class="flex items-start">
+                            <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                            Data will be stored in RDF format for semantic web compatibility
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </form>
     </div>
 </Modal::Default>
+

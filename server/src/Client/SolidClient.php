@@ -5,6 +5,7 @@ namespace Fleetbase\Solid\Client;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SolidClient
@@ -12,8 +13,8 @@ class SolidClient
     private string $host = 'localhost';
     private int $port    = 3000;
     private bool $secure = true;
-    public ?SolidIdentity $solidIdentity;
-    public ?OpenIDConnectClient $oidc;
+    public SolidIdentity $identity;
+    public OpenIDConnectClient $oidc;
     private const DEFAULT_MIME_TYPE   = 'text/turtle';
     private const LDP_BASIC_CONTAINER = 'http://www.w3.org/ns/ldp#BasicContainer';
     private const LDP_RESOURCE        = 'http://www.w3.org/ns/ldp#Resource';
@@ -96,23 +97,45 @@ class SolidClient
     }
 
     /**
+     * Make a request with a specific identity.
+     */
+    public function requestWithIdentity(SolidIdentity $identity, string $method, string $uri, string|array $data = [], array $options = []): Response
+    {
+        $this->identity = $identity;
+
+        // Check if we should skip authentication
+        $withoutAuth = data_get($options, 'withoutAuth', false);
+
+        if ($withoutAuth) {
+            return $this->request($method, $uri, $data, $options);
+        }
+
+        return $this->authenticatedRequest($method, $uri, $data, $options);
+    }
+
+    /**
      * Make a HTTP request to the Solid server.
      *
      * @param string $method  The HTTP method (GET, POST, etc.)
      * @param string $uri     The URI to send the request to
      * @param array  $options Options for the request
      */
-    protected function request(string $method, string $uri, array $data = [], array $options = []): Response
+    protected function request(string $method, string $uri, string|array $data = [], array $options = []): Response
     {
         $url = $this->createRequestUrl($uri);
 
-        return Http::withOptions($options)->{$method}($url, $data);
+        // Handle different data types
+        if (is_string($data)) {
+            return Http::withOptions($options)->withBody($data, $options['headers']['Content-Type'] ?? 'text/plain')->send($method, $url);
+        } else {
+            return Http::withOptions($options)->{$method}($url, $data);
+        }
     }
 
     /**
      * Send an authenticated request with the current identity.
      */
-    public function authenticatedRequest(string $method, string $uri, array $data = [], array $options = []): Response
+    public function authenticatedRequest(string $method, string $uri, string|array $data = [], array $options = []): Response
     {
         if (!$this->identity) {
             throw new \Exception('Solid Identity required to make an authenticated request.');
@@ -120,13 +143,39 @@ class SolidClient
 
         $url         = $this->createRequestUrl($uri);
         $accessToken = $this->identity->getAccessToken();
+
         if ($accessToken) {
-            $options['headers']                  = is_array($options['headers']) ? $options['headers'] : [];
+            $options['headers']                  = isset($options['headers']) && is_array($options['headers']) ? $options['headers'] : [];
             $options['headers']['Authorization'] = 'DPoP ' . $accessToken;
             $options['headers']['DPoP']          = OpenIDConnectClient::createDPoP($method, $url, $accessToken);
         }
 
-        return Http::withOptions($options)->{$method}($url, $data);
+        Log::info('[SOLID REQUEST HEADERS]', ['headers' => $options['headers']]);
+
+        // Handle different data types
+        if (is_string($data)) {
+            // For string data, send as raw body
+            $contentType = $options['headers']['Content-Type'] ?? 'text/plain';
+
+            Log::info('[SENDING STRING BODY]', [
+                'method'       => $method,
+                'url'          => $url,
+                'content_type' => $contentType,
+                'body_length'  => strlen($data),
+                'body_preview' => substr($data, 0, 200),
+            ]);
+
+            return Http::withOptions($options)->withBody($data, $contentType)->send($method, $url);
+        } else {
+            // For array data, use the original method
+            Log::info('[SENDING ARRAY DATA]', [
+                'method' => $method,
+                'url'    => $url,
+                'data'   => $data,
+            ]);
+
+            return Http::withOptions($options)->{$method}($url, $data);
+        }
     }
 
     /**

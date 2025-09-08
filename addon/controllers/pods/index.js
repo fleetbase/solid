@@ -8,6 +8,7 @@ export default class PodsIndexController extends Controller {
     @service hostRouter;
     @service notifications;
     @service filters;
+    @service fetch;
     @service modalsManager;
     @service crud;
     @tracked query = '';
@@ -85,9 +86,29 @@ export default class PodsIndexController extends Controller {
             title: 'Create a new Pod',
             acceptButtonText: 'Create Pod',
             pod: {
-                name: null,
+                name: '',
+                description: '',
             },
-            confirm: () => {},
+            requestPodCreation: this.requestPodCreation,
+            confirm: async () => {
+                const pod = this.modalsManager.getOption('pod');
+
+                if (!pod.name.trim()) {
+                    return this.notifications.error('Pod name cannot be empty!');
+                }
+
+                try {
+                    const response = this.requestPodCreation.perform(pod);
+                    if (response.success) {
+                        this.notifications.success(`Pod "${this.podName}" created successfully!`);
+                        return modal.done();
+                    }
+                    
+                    this.notifications.error('Failed to create pod.');
+                } catch (error) {
+                    this.notifications.serverError(error);
+                }
+            },
         });
     }
 
@@ -133,5 +154,16 @@ export default class PodsIndexController extends Controller {
     @task({ restartable: true }) *search(event) {
         yield timeout(300);
         this.query = typeof event.target.value === 'string' ? event.target.value : '';
+    }
+
+    @task *requestPodCreation(pod) {
+        const response = yield this.fetch.post('pods', {
+            name: pod.name.trim(),
+            description: pod.description.trim() || null
+        }, { 
+            namespace: 'solid/int/v1' 
+        });
+
+        return response;
     }
 }

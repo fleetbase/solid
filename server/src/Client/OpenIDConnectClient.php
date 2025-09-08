@@ -2,9 +2,13 @@
 
 namespace Fleetbase\Solid\Client;
 
+use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Jumbojett\OpenIDConnectClient as BaseOpenIDConnectClient;
 use Jumbojett\OpenIDConnectClientException;
@@ -15,6 +19,8 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     private ?SolidClient $solid;
     private ?SolidIdentity $identity;
     private ?\stdClass $openIdConfig;
+    private string $code;
+    private static $dpopKeyPair;
 
     public function __construct(array $options = [])
     {
@@ -81,7 +87,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     public function authenticate(): bool
     {
         $this->setCodeChallengeMethod('S256');
-        $this->addScope(['openid', 'webid', 'offline_access']);
+        $this->addScope(['openid', 'profile', 'webid', 'offline_access', 'solid']);
 
         return parent::authenticate();
     }
@@ -175,8 +181,9 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
 
     protected function getSessionKey($key)
     {
-        if (Redis::exists('oidc:session' . Str::slug($key))) {
-            return $this->retrieve('oidc:session' . Str::slug($key));
+        $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
+        if (Redis::exists($sessionKey)) {
+            return $this->retrieve($sessionKey);
         }
 
         return false;
@@ -184,12 +191,14 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
 
     protected function setSessionKey($key, $value)
     {
-        $this->save('oidc:session' . Str::slug($key), $value);
+        $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
+        $this->save($sessionKey, $value);
     }
 
     protected function unsetSessionKey($key)
     {
-        Redis::del('oidc:session' . Str::slug($key));
+        $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
+        Redis::del($sessionKey);
     }
 
     protected function getAllSessionKeysWithValues()
@@ -211,7 +220,442 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return $keys;
     }
 
-    // public static function createDPoP(string $method, string $url, string $accessToken = null): string
+    public function verifyJWTsignature($jwt)
+    {
+        $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')), true);
+        if (!is_array($jwks)) {
+            throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
+        }
+
+        try {
+            JWT::decode($jwt, JWK::parseKeySet($jwks));
+        } catch (\Exception $e) {
+            throw new OpenIDConnectClientException('Error decoding JWT: ' . $e->getMessage(), $e->getCode(), $e);
+        }
+
+        return true;
+    }
+
+    /**
+     * Set the ID token.
+     */
+    public function setIdToken($idToken)
+    {
+        $this->idToken = $idToken;
+    }
+
+    /**
+     * Public wrapper for decodeJWT.
+     */
+    public function decodeJWTPublic($jwt, $section = 0)
+    {
+        return $this->decodeJWT($jwt, $section);
+    }
+
+    // /**
+    //  * Get WebID from ID token.
+    //  */
+    // public function getWebIdFromIdToken(?string $idToken = null): ?string
     // {
+    //     $token = $idToken ?? $this->getIdToken();
+
+    //     if (!$token) {
+    //         return null;
+    //     }
+
+    //     try {
+    //         $claims = $this->decodeJWT($token, 1);
+
+    //         return $claims->sub ?? $claims->webid ?? null;
+    //     } catch (\Exception $e) {
+    //         return null;
+    //     }
     // }
+
+    /**
+     * Get WebID from ID token with enhanced error handling.
+     */
+    public function getWebIdFromIdToken(string $idToken): ?string
+    {
+        $token = $idToken ?? $this->getIdToken();
+        if (!$token) {
+            return null;
+        }
+
+        try {
+            Log::info('[EXTRACTING WEBID FROM ID TOKEN]', [
+                'token_length' => strlen($idToken),
+            ]);
+
+            $payload = $this->decodeJWT($idToken, 1);
+            $webId   = $payload->webid ?? $payload->sub ?? null;
+
+            Log::info('[WEBID EXTRACTED]', [
+                'webid'        => $webId,
+                'payload_keys' => array_keys((array) $payload),
+            ]);
+
+            return $webId;
+        } catch (\Throwable $e) {
+            Log::error('[WEBID EXTRACTION ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Get all claims from ID token.
+     */
+    public function getIdTokenClaims(?string $idToken = null): ?object
+    {
+        $token = $idToken ?? $this->getIdToken();
+
+        if (!$token) {
+            return null;
+        }
+
+        try {
+            return $this->decodeJWT($token, 1);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Create DPoP token with proper signing and debugging.
+     */
+    public static function createDPoP(string $method, string $url, ?string $accessToken = null): string
+    {
+        try {
+            Log::info('[CREATING DPOP TOKEN]', [
+                'method'           => strtolower($method),
+                'url'              => $url,
+                'has_access_token' => $accessToken !== null,
+            ]);
+
+            // Load (or generate) keypair
+            $keyPair = self::loadDPoPKeyPair();
+            if (!$keyPair) {
+                $keyPair = self::generateDPoPKeyPair();
+                if ($keyPair) {
+                    self::saveDPoPKeyPair($keyPair);
+                }
+            }
+            if (!$keyPair || empty($keyPair['private_key']) || empty($keyPair['public_jwk'])) {
+                throw new \Exception('DPoP key pair unavailable');
+            }
+
+            $header = [
+                'typ' => 'dpop+jwt',
+                'alg' => 'RS256',
+                'jwk' => $keyPair['public_jwk'],
+            ];
+
+            $now   = time();
+            $jti   = bin2hex(random_bytes(16));
+            $htm   = strtoupper($method);
+            $htu   = $url;
+
+            $payload = [
+                'jti' => $jti,
+                'htm' => $htm,
+                'htu' => $htu,
+                'iat' => $now,
+            ];
+
+            // Only include 'ath' when we are binding a proof *for a resource request* or a refresh that already has an access token.
+            if (!empty($accessToken)) {
+                $payload['ath'] = self::generateAccessTokenHash($accessToken);
+            }
+
+            // Sign (RS256) with our private key
+            $privateKey = openssl_pkey_get_private($keyPair['private_key']);
+            if (!$privateKey) {
+                throw new \Exception('Failed to load DPoP private key');
+            }
+
+            $encodedHeader  = rtrim(strtr(base64_encode(json_encode($header)), '+/', '-_'), '=');
+            $encodedPayload = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+            $signingInput   = $encodedHeader . '.' . $encodedPayload;
+
+            $signature = '';
+            if (!openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+                throw new \Exception('Failed to sign DPoP proof');
+            }
+
+            $encodedSignature = rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
+            $jwt              = $encodedHeader . '.' . $encodedPayload . '.' . $encodedSignature;
+
+            Log::info('[DPOP TOKEN CREATED]', [
+                'token_length'   => strlen($jwt),
+                'token_preview'  => substr($jwt, 0, 80),
+                'has_placeholder'=> false,
+            ]);
+
+            return $jwt;
+        } catch (\Throwable $e) {
+            Log::error('[DPOP ERROR]', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate or load DPoP key pair.
+     */
+    private static function getDPoPKeyPair(): ?array
+    {
+        if (self::$dpopKeyPair !== null) {
+            return self::$dpopKeyPair;
+        }
+
+        try {
+            // Try to load existing key pair
+            $keyPair = self::loadDPoPKeyPair();
+
+            if (!$keyPair) {
+                // Generate new key pair
+                $keyPair = self::generateDPoPKeyPair();
+
+                if ($keyPair) {
+                    self::saveDPoPKeyPair($keyPair);
+                }
+            }
+
+            self::$dpopKeyPair = $keyPair;
+
+            Log::info('[DPOP KEY PAIR LOADED]', [
+                'has_private_key' => isset($keyPair['private_key']),
+                'has_public_jwk'  => isset($keyPair['public_jwk']),
+            ]);
+
+            return $keyPair;
+        } catch (\Throwable $e) {
+            Log::error('[DPOP KEY PAIR ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Generate new DPoP key pair.
+     */
+    private static function generateDPoPKeyPair(): ?array
+    {
+        try {
+            // Generate RSA key pair
+            $config = [
+                'digest_alg'       => 'sha256',
+                'private_key_bits' => 2048,
+                'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            ];
+
+            $resource = openssl_pkey_new($config);
+
+            if (!$resource) {
+                throw new \Exception('Failed to generate RSA key pair');
+            }
+
+            // Export private key
+            openssl_pkey_export($resource, $privateKey);
+
+            // Get public key details
+            $publicKeyDetails = openssl_pkey_get_details($resource);
+            $publicKey        = $publicKeyDetails['key'];
+
+            // Create JWK for public key
+            $publicJwk = [
+                'kty' => 'RSA',
+                'n'   => rtrim(strtr(base64_encode($publicKeyDetails['rsa']['n']), '+/', '-_'), '='),
+                'e'   => rtrim(strtr(base64_encode($publicKeyDetails['rsa']['e']), '+/', '-_'), '='),
+            ];
+
+            Log::info('[DPOP KEY PAIR GENERATED]', [
+                'private_key_length' => strlen($privateKey),
+                'public_key_length'  => strlen($publicKey),
+                'jwk_keys'           => array_keys($publicJwk),
+            ]);
+
+            return [
+                'private_key' => $privateKey,
+                'public_key'  => $publicKey,
+                'public_jwk'  => $publicJwk,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('[DPOP KEY GENERATION ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Load DPoP key pair from storage.
+     */
+    private static function loadDPoPKeyPair(): ?array
+    {
+        try {
+            if (!Storage::exists('solid/dpop_keys.json')) {
+                return null;
+            }
+
+            $keyData = json_decode(Storage::get('solid/dpop_keys.json'), true);
+
+            if (!$keyData || !isset($keyData['private_key'], $keyData['public_jwk'])) {
+                return null;
+            }
+
+            Log::info('[DPOP KEY PAIR LOADED FROM STORAGE]');
+
+            return $keyData;
+        } catch (\Throwable $e) {
+            Log::warning('[DPOP KEY LOAD ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Save DPoP key pair to storage.
+     */
+    private static function saveDPoPKeyPair(array $keyPair): void
+    {
+        try {
+            Storage::put('solid/dpop_keys.json', json_encode([
+                'private_key' => $keyPair['private_key'],
+                'public_key'  => $keyPair['public_key'],
+                'public_jwk'  => $keyPair['public_jwk'],
+                'created_at'  => now()->toISOString(),
+            ]));
+
+            Log::info('[DPOP KEY PAIR SAVED TO STORAGE]');
+        } catch (\Throwable $e) {
+            Log::warning('[DPOP KEY SAVE ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Generate JTI (JWT ID).
+     */
+    private static function generateJti(): string
+    {
+        return bin2hex(random_bytes(16));
+    }
+
+    /**
+     * Generate access token hash for DPoP.
+     */
+    private static function generateAccessTokenHash(string $accessToken): string
+    {
+        return rtrim(strtr(base64_encode(hash('sha256', $accessToken, true)), '+/', '-_'), '=');
+    }
+
+    /**
+     * Clear client credentials and DPoP keys.
+     */
+    public function clearClientCredentials(): void
+    {
+        try {
+            // Clear stored DPoP keys
+            if (Storage::exists('solid/dpop_keys.json')) {
+                Storage::delete('solid/dpop_keys.json');
+            }
+
+            self::$dpopKeyPair = null;
+
+            Log::info('[CLIENT CREDENTIALS CLEARED]');
+        } catch (\Throwable $e) {
+            Log::warning('[CLEAR CREDENTIALS ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Exchange authorization code for tokens with enhanced error handling.
+     */
+    public function exchangeCodeForTokens(string $code, ?string $state = null): \stdClass
+    {
+        try {
+            Log::info('[EXCHANGING CODE FOR TOKENS]', [
+                'code_length' => strlen($code),
+                'state'       => $state,
+            ]);
+
+            $this->setCode($code);
+            if ($state !== null) {
+                $this->setState($state);
+            }
+
+            // --- DPoP proof for the token endpoint (no 'ath' here) ---
+            $tokenEndpoint = $this->getProviderConfigValue('token_endpoint');
+            $dpop          = self::createDPoP('POST', $tokenEndpoint, null);
+
+            // Important: pass the header through to requestTokens
+            $tokenResponse = $this->requestTokens($code, [
+                'DPoP: ' . $dpop,
+                // Be explicit
+                'Content-Type: application/x-www-form-urlencoded',
+            ]);
+
+            Log::info('[TOKEN EXCHANGE SUCCESS]', [
+                'has_access_token' => isset($tokenResponse->access_token),
+                'has_id_token'     => isset($tokenResponse->id_token),
+                'token_type'       => $tokenResponse->token_type ?? 'unknown',
+            ]);
+
+            return (object) $tokenResponse;
+        } catch (\Throwable $e) {
+            Log::error('[TOKEN EXCHANGE ERROR]', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
+    }
+
+    public function setCode(string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    private function sessionKey(string $key): string
+    {
+        $prefix = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':';
+
+        return $prefix . Str::slug($key);
+    }
+
+    // Full implementations – no placeholders
+    protected function loadFromStorage(string $key): ?string
+    {
+        try {
+            $value = Redis::get($this->sessionKey($key));
+
+            return $value === null ? null : (string) $value;
+        } catch (\Throwable $e) {
+            Log::warning('[OIDC STORAGE LOAD ERROR]', ['key' => $key, 'error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    protected function saveToStorage(string $key, string $value): void
+    {
+        try {
+            Redis::set($this->sessionKey($key), $value);
+        } catch (\Throwable $e) {
+            Log::warning('[OIDC STORAGE SAVE ERROR]', ['key' => $key, 'error' => $e->getMessage()]);
+        }
+    }
 }

@@ -1,6 +1,4 @@
 .solid-fleetbase-home-container {
-    margin: auto;
-    width: 1200px;
     padding: 2rem;
 }
 
@@ -18,6 +16,7 @@
 
 body[data-theme='light'] .solid-fleetbase-home-container a:not([class*='text-']),
 body[data-theme='dark'] .solid-fleetbase-home-container a:not([class*='text-']),
+.solid-fleetbase-home-container a:not(.next-content-panel-header-left),
 .solid-fleetbase-home-container a {
     color: #60a5fa;
     text-decoration: underline;

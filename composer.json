@@ -1,6 +1,6 @@
 {
     "name": "fleetbase/solid-api",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "keywords": [
         "fleetbase-extension",
@@ -28,8 +28,9 @@
     ],
     "require": {
         "php": "^8.0",
-        "fleetbase/core-api": "^1.4.27",
-        "fleetbase/fleetops-api": "^0.5.2",
+        "fleetbase/core-api": "*",
+        "fleetbase/fleetops-api": "*",
+        "fleetbase/solid-oidc-client": "*",
         "php-http/guzzle7-adapter": "^1.0",
         "psr/http-factory-implementation": "*",
         "jumbojett/openid-connect-php": "^0.9.10",
@@ -52,8 +53,8 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/fleetbase/laravel-model-caching"
+            "type": "path",
+            "url": "../solid-oidc-php"
         }
     ],
     "autoload": {

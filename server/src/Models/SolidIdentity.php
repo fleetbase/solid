@@ -122,9 +122,9 @@ class SolidIdentity extends Model
         return $solidIdentity;
     }
 
-    public function request(string $method, string $uri, array $data = [], array $options = [])
+    public function request(string $method, string $uri, string|array $data = [], array $options = [])
     {
-        $solidClient = new SolidClient();
+        $solidClient = new SolidClient(['identity' => $this]);
 
         return $solidClient->requestWithIdentity($this, $method, $uri, $data, $options);
     }
