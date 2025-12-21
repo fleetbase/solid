@@ -51,9 +51,11 @@ export default class HomeController extends Controller {
             title: 'Setup CSS Account Credentials',
             acceptButtonText: 'Setup Credentials',
             acceptButtonIcon: 'check',
+            keepOpen: true,
             cssEmail: '',
             cssPassword: '',
             error: null,
+            validationErrors: null,
             serverUrl: this.serverUrl,
             confirm: (modal) => {
                 modal.startLoading();
