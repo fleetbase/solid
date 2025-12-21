@@ -166,10 +166,15 @@ class PodService
                 }
                 
                 $controls = $controlsResponse->json();
+                
+                Log::info('[CSS ACCOUNT CONTROLS]', ['controls' => $controls]);
+                
                 $podControlUrl = data_get($controls, 'controls.account.pod');
                 
                 if (!$podControlUrl) {
-                    throw new \Exception('Pod control URL not found in account controls');
+                    Log::warning('[POD CONTROL URL NOT FOUND]', ['controls_keys' => array_keys($controls)]);
+                    // Fall back to legacy methods
+                    throw new \Exception('Pod control URL not found - falling back to legacy methods');
                 }
                 
                 Log::info('[CSS POD CONTROL URL]', ['url' => $podControlUrl]);
