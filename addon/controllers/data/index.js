@@ -88,7 +88,7 @@ export default class DataIndexController extends Controller {
     }
 
     @action createFolder() {
-        this.modalsManager.show('modals/create-folder', {
+        this.modalsManager.show('modals/create-solid-folder', {
             title: 'Create New Folder',
             acceptButtonText: 'Create',
             acceptButtonIcon: 'folder-plus',
@@ -129,7 +129,7 @@ export default class DataIndexController extends Controller {
             orders: false,
         };
 
-        this.modalsManager.show('modals/import-resources', {
+        this.modalsManager.show('modals/import-solid-resources', {
             title: 'Import Fleetops Resources',
             acceptButtonText: 'Import Selected',
             acceptButtonIcon: 'download',

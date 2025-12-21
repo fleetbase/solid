@@ -1,0 +1,85 @@
+<Modal::Default 
+    @modalIsOpened={{@modalIsOpened}} 
+    @options={{@options}} 
+    @confirm={{@options.confirm}} 
+    @decline={{@options.decline}}
+>
+    <div class="modal-body-container">
+        <div class="space-y-4">
+            <div>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">
+                    Select the Fleetops resources you want to import into your Solid pod:
+                </p>
+
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <input 
+                            type="checkbox" 
+                            checked={{@options.resourceTypes.vehicles}}
+                            {{on "change" (fn @options.toggleResourceType "vehicles")}}
+                            class="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900 dark:text-white">Vehicles</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Import all vehicles from Fleetops</div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <input 
+                            type="checkbox" 
+                            checked={{@options.resourceTypes.drivers}}
+                            {{on "change" (fn @options.toggleResourceType "drivers")}}
+                            class="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900 dark:text-white">Drivers</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Import all drivers from Fleetops</div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <input 
+                            type="checkbox" 
+                            checked={{@options.resourceTypes.contacts}}
+                            {{on "change" (fn @options.toggleResourceType "contacts")}}
+                            class="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900 dark:text-white">Contacts</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Import all contacts/customers from Fleetops</div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <input 
+                            type="checkbox" 
+                            checked={{@options.resourceTypes.orders}}
+                            {{on "change" (fn @options.toggleResourceType "orders")}}
+                            class="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                        <div class="ml-3">
+                            <div class="font-medium text-gray-900 dark:text-white">Orders</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Import all orders from Fleetops</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            {{#if @options.importProgress}}
+                <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded p-3">
+                    <div class="flex items-center">
+                        <Spinner class="mr-3" />
+                        <p class="text-sm text-blue-800 dark:text-blue-200">{{@options.importProgress}}</p>
+                    </div>
+                </div>
+            {{/if}}
+
+            {{#if @options.error}}
+                <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded p-3">
+                    <p class="text-sm text-red-800 dark:text-red-200">{{@options.error}}</p>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+</Modal::Default>

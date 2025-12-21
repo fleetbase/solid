@@ -38,7 +38,7 @@ class SolidController extends BaseController
     {
         $defaultConfig = config('solid.server');
         $savedConfig   = Setting::system('solid.server');
-        $config        = array_merge($defaultConfig, $savedConfig);
+        $config        = array_merge($defaultConfig, $savedConfig ?? []);
 
         return response()->json($config);
     }
