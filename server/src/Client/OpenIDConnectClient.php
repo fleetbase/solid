@@ -634,16 +634,8 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 $this->setState($state);
             }
 
-            // --- DPoP proof for the token endpoint (no 'ath' here) ---
-            $tokenEndpoint = $this->getProviderConfigValue('token_endpoint');
-            $dpop          = self::createDPoP('POST', $tokenEndpoint, null);
-
-            // Important: pass the header through to requestTokens
-            $tokenResponse = $this->requestTokens($code, [
-                'DPoP: ' . $dpop,
-                // Be explicit
-                'Content-Type: application/x-www-form-urlencoded',
-            ]);
+            // requestTokens() now automatically adds DPoP header
+            $tokenResponse = $this->requestTokens($code);
 
             Log::info('[TOKEN EXCHANGE SUCCESS]', [
                 'has_access_token' => isset($tokenResponse->access_token),
