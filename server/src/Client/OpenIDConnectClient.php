@@ -179,7 +179,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return null;
     }
 
-    protected function getSessionKey($key)
+    protected function getSessionKey(string $key)
     {
         $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
         if (Redis::exists($sessionKey)) {
@@ -189,13 +189,13 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return false;
     }
 
-    protected function setSessionKey($key, $value)
+    protected function setSessionKey(string $key, $value)
     {
         $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
         $this->save($sessionKey, $value);
     }
 
-    protected function unsetSessionKey($key)
+    protected function unsetSessionKey(string $key)
     {
         $sessionKey = 'oidc:session:' . ($this->identity ? $this->identity->identifier : 'default') . ':' . Str::slug($key);
         Redis::del($sessionKey);
@@ -220,7 +220,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return $keys;
     }
 
-    public function verifyJWTsignature($jwt)
+    public function verifyJWTSignature(string $jwt): bool
     {
         $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')), true);
         if (!is_array($jwks)) {
@@ -247,7 +247,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     /**
      * Public wrapper for decodeJWT.
      */
-    public function decodeJWTPublic($jwt, $section = 0)
+    public function decodeJWTPublic(string $jwt, int $section = 0)
     {
         return $this->decodeJWT($jwt, $section);
     }
