@@ -3,6 +3,7 @@
 namespace Fleetbase\Solid\Http\Controllers;
 
 use Fleetbase\Http\Controllers\Controller as BaseController;
+use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Fleetbase\Solid\Services\CssAccountService;
 use Fleetbase\Support\Utils;
