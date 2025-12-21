@@ -20,7 +20,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     private ?SolidIdentity $identity;
     private ?\stdClass $openIdConfig;
     private string $code;
-    private static $dpopKeyPair;
+    private static $dpopKeyPairCache = [];
 
     public function __construct(array $options = [])
     {
@@ -443,30 +443,33 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     /**
      * Generate or load DPoP key pair.
      */
-    private static function getDPoPKeyPair(): ?array
+    private function getDPoPKeyPair(): ?array
     {
-        if (self::$dpopKeyPair !== null) {
-            return self::$dpopKeyPair;
+        $cacheKey = $this->getDPoPCacheKey();
+        
+        if (isset(self::$dpopKeyPairCache[$cacheKey])) {
+            return self::$dpopKeyPairCache[$cacheKey];
         }
 
         try {
             // Try to load existing key pair
-            $keyPair = self::loadDPoPKeyPair();
+            $keyPair = $this->loadDPoPKeyPair();
 
             if (!$keyPair) {
                 // Generate new key pair
                 $keyPair = self::generateDPoPKeyPair();
 
                 if ($keyPair) {
-                    self::saveDPoPKeyPair($keyPair);
+                    $this->saveDPoPKeyPair($keyPair);
                 }
             }
 
-            self::$dpopKeyPair = $keyPair;
+            self::$dpopKeyPairCache[$cacheKey] = $keyPair;
 
             Log::info('[DPOP KEY PAIR LOADED]', [
                 'has_private_key' => isset($keyPair['private_key']),
                 'has_public_jwk'  => isset($keyPair['public_jwk']),
+                'identity_uuid' => $this->identity?->uuid,
             ]);
 
             return $keyPair;
@@ -535,14 +538,16 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     /**
      * Load DPoP key pair from storage.
      */
-    private static function loadDPoPKeyPair(): ?array
+    private function loadDPoPKeyPair(): ?array
     {
         try {
-            if (!Storage::exists('solid/dpop_keys.json')) {
+            $keyPath = $this->getDPoPKeyPath();
+            
+            if (!Storage::exists($keyPath)) {
                 return null;
             }
 
-            $keyData = json_decode(Storage::get('solid/dpop_keys.json'), true);
+            $keyData = json_decode(Storage::get($keyPath), true);
 
             if (!$keyData || !isset($keyData['private_key'], $keyData['public_jwk'])) {
                 return null;
@@ -563,10 +568,12 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     /**
      * Save DPoP key pair to storage.
      */
-    private static function saveDPoPKeyPair(array $keyPair): void
+    private function saveDPoPKeyPair(array $keyPair): void
     {
         try {
-            Storage::put('solid/dpop_keys.json', json_encode([
+            $keyPath = $this->getDPoPKeyPath();
+            
+            Storage::put($keyPath, json_encode([
                 'private_key' => $keyPair['private_key'],
                 'public_key'  => $keyPair['public_key'],
                 'public_jwk'  => $keyPair['public_jwk'],
@@ -598,17 +605,44 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     }
 
     /**
+     * Get DPoP key storage path for this identity.
+     */
+    private function getDPoPKeyPath(): string
+    {
+        if ($this->identity instanceof SolidIdentity) {
+            return 'solid/dpop_keys_' . $this->identity->uuid . '.json';
+        }
+        
+        // Fallback to global key for non-identity contexts
+        return 'solid/dpop_keys.json';
+    }
+    
+    /**
+     * Get DPoP cache key for this identity.
+     */
+    private function getDPoPCacheKey(): string
+    {
+        if ($this->identity instanceof SolidIdentity) {
+            return 'identity_' . $this->identity->uuid;
+        }
+        
+        return 'global';
+    }
+
+    /**
      * Clear client credentials and DPoP keys.
      */
     public function clearClientCredentials(): void
     {
         try {
-            // Clear stored DPoP keys
-            if (Storage::exists('solid/dpop_keys.json')) {
-                Storage::delete('solid/dpop_keys.json');
+            // Clear stored DPoP keys for this identity
+            $keyPath = $this->getDPoPKeyPath();
+            if (Storage::exists($keyPath)) {
+                Storage::delete($keyPath);
             }
 
-            self::$dpopKeyPair = null;
+            $cacheKey = $this->getDPoPCacheKey();
+            unset(self::$dpopKeyPairCache[$cacheKey]);
 
             Log::info('[CLIENT CREDENTIALS CLEARED]');
         } catch (\Throwable $e) {
