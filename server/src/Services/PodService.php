@@ -117,6 +117,72 @@ class PodService
 
         Log::info('[CREATING POD]', ['name' => $name, 'storage_url' => $storageUrl, 'pod_url' => $podUrl]);
 
+        // Check if identity has CSS credentials for account management API
+        $cssAccountService = app(CssAccountService::class);
+        
+        if ($cssAccountService->hasCredentials($identity)) {
+            Log::info('[USING CSS ACCOUNT MANAGEMENT API]');
+            
+            try {
+                // Get issuer from token response
+                $tokenResponse = $identity->token_response;
+                $issuer = $tokenResponse['id_token_claims']['iss'] ?? config('solid.server.url', 'http://localhost:3000');
+                
+                // Get access token using client credentials
+                $solid = SolidClient::create(['identity' => $identity]);
+                $clientId = $identity->css_client_id;
+                $clientSecret = decrypt($identity->css_client_secret);
+                
+                $accessToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $solid->oidc);
+                
+                if (!$accessToken) {
+                    throw new \Exception('Failed to get CSS access token');
+                }
+                
+                // Use the account management API to create pod
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                    'Content-Type' => 'application/json',
+                ])->post("{$issuer}/.account/", [
+                    'name' => $podSlug,
+                ]);
+                
+                Log::info('[CSS ACCOUNT API RESPONSE]', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                if ($response->successful()) {
+                    $podData = $response->json();
+                    
+                    return [
+                        'id' => $podSlug,
+                        'name' => $name,
+                        'url' => $podData['pod'] ?? $podUrl,
+                        'description' => $description,
+                        'created_at' => now()->toISOString(),
+                        'type' => 'pod',
+                        'status' => 'created',
+                        'method' => 'css_account_api',
+                    ];
+                }
+                
+                Log::warning('[CSS ACCOUNT API FAILED]', [
+                    'status' => $response->status(),
+                    'error' => $response->body(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('[CSS ACCOUNT API ERROR]', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                // Fall through to legacy methods
+            }
+        } else {
+            Log::info('[NO CSS CREDENTIALS - USING LEGACY METHODS]');
+        }
+
+        // Legacy methods as fallback
         $metadata = $this->generatePodMetadata($name, $description);
 
         // ---- Method 1: POST to parent (recommended) ----
@@ -223,7 +289,7 @@ class PodService
         }
 
         // Final safety
-        throw new \Exception('All pod creation methods failed with 401 Unauthorized. Most common cause: access token not DPoP-bound. Ensure DPoP header is sent to the token endpoint and retry.');
+        throw new \Exception('All pod creation methods failed. If you have CSS credentials configured, there may be an issue with the account management API. Otherwise, please set up CSS credentials for pod creation.');
     }
 
     /**

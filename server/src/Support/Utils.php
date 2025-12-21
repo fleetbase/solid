@@ -44,4 +44,14 @@ class Utils extends FleetbaseUtils
 
         return null;
     }
+
+    /**
+     * Get the Solid server URL from configuration.
+     *
+     * @return string
+     */
+    public static function getSolidServerUrl(): string
+    {
+        return config('solid.server.url', 'http://localhost:3000');
+    }
 }
