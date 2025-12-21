@@ -109,6 +109,28 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return parent::authenticate();
     }
 
+    /**
+     * Override requestTokens to inject DPoP header for token endpoint.
+     */
+    protected function requestTokens(string $code, array $headers = [])
+    {
+        // Create DPoP proof for the token endpoint
+        $tokenEndpoint = $this->getProviderConfigValue('token_endpoint');
+        $dpop = self::createDPoP('POST', $tokenEndpoint, null);
+        
+        // Add DPoP header to the headers array
+        $headers[] = 'DPoP: ' . $dpop;
+        
+        Log::info('[REQUEST TOKENS WITH DPOP]', [
+            'token_endpoint' => $tokenEndpoint,
+            'dpop_length' => strlen($dpop),
+            'headers_count' => count($headers),
+        ]);
+        
+        // Call parent with DPoP header included
+        return parent::requestTokens($code, $headers);
+    }
+
     private function setClientCredentials(string $clientName = CLIENT_NAME, $clientCredentials, bool $save = false, ?\Closure $callback = null): OpenIDConnectClient
     {
         $this->setClientID($clientCredentials->client_id);
