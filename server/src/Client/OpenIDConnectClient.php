@@ -116,7 +116,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     {
         // Create DPoP proof for the token endpoint
         $tokenEndpoint = $this->getProviderConfigValue('token_endpoint');
-        $dpop = self::createDPoP('POST', $tokenEndpoint, null);
+        $dpop = $this->createDPoP('POST', $tokenEndpoint, null);
         
         // Add DPoP header to the headers array
         $headers[] = 'DPoP: ' . $dpop;
@@ -365,7 +365,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     /**
      * Create DPoP token with proper signing and debugging.
      */
-    public static function createDPoP(string $method, string $url, ?string $accessToken = null): string
+    public function createDPoP(string $method, string $url, ?string $accessToken = null): string
     {
         try {
             Log::info('[CREATING DPOP TOKEN]', [
@@ -375,13 +375,8 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             ]);
 
             // Load (or generate) keypair
-            $keyPair = self::loadDPoPKeyPair();
-            if (!$keyPair) {
-                $keyPair = self::generateDPoPKeyPair();
-                if ($keyPair) {
-                    self::saveDPoPKeyPair($keyPair);
-                }
-            }
+            $keyPair = $this->getDPoPKeyPair();
+            
             if (!$keyPair || empty($keyPair['private_key']) || empty($keyPair['public_jwk'])) {
                 throw new \Exception('DPoP key pair unavailable');
             }

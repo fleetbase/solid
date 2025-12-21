@@ -147,7 +147,7 @@ class SolidClient
         if ($accessToken) {
             $options['headers']                  = isset($options['headers']) && is_array($options['headers']) ? $options['headers'] : [];
             $options['headers']['Authorization'] = 'DPoP ' . $accessToken;
-            $options['headers']['DPoP']          = OpenIDConnectClient::createDPoP($method, $url, $accessToken);
+            $options['headers']['DPoP']          = $this->oidc->createDPoP($method, $url, $accessToken);
         }
 
         Log::info('[SOLID REQUEST HEADERS]', ['headers' => $options['headers']]);
