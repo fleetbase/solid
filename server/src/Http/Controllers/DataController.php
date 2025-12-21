@@ -125,7 +125,13 @@ class DataController extends BaseController
             $profile = $this->podService->getProfileData($identity);
             $webId = $profile['webid'];
             $podUrl = $this->podService->getPodUrlFromWebId($webId);
-            $folderUrl = rtrim($podUrl, '/') . '/' . ltrim($path, '/') . '/' . $folderName . '/';
+            
+            // Build folder URL, avoiding double slashes
+            $folderUrl = rtrim($podUrl, '/') . '/';
+            if (!empty($path)) {
+                $folderUrl .= trim($path, '/') . '/';
+            }
+            $folderUrl .= $folderName . '/';
 
             Log::info('[FOLDER CREATE]', [
                 'name' => $folderName,
