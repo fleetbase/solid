@@ -234,6 +234,7 @@ class CssAccountService
             // Step 3: Store credentials in identity
             $identity->update([
                 'css_email' => $email,
+                'css_password' => encrypt($password), // Encrypt and store the password
                 'css_client_id' => $tokenData['id'],
                 'css_client_secret' => encrypt($tokenData['secret']), // Encrypt the secret
                 'css_client_resource_url' => $tokenData['resource'] ?? null,

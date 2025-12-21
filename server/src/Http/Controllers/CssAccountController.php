@@ -173,6 +173,7 @@ class CssAccountController extends BaseController
 
             $identity->update([
                 'css_email' => null,
+                'css_password' => null,
                 'css_client_id' => null,
                 'css_client_secret' => null,
                 'css_client_resource_url' => null,

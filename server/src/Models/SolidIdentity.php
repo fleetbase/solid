@@ -27,7 +27,7 @@ class SolidIdentity extends Model
      *
      * @var array
      */
-    protected $fillable = ['company_uuid', 'user_uuid', 'token_response', 'identifier', 'css_email', 'css_client_id', 'css_client_secret', 'css_client_resource_url'];
+    protected $fillable = ['company_uuid', 'user_uuid', 'token_response', 'identifier', 'css_email', 'css_password', 'css_client_id', 'css_client_secret', 'css_client_resource_url'];
 
     /**
      * The attributes that should be cast to native types.

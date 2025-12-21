@@ -146,19 +146,21 @@ class PodService
                     $issuer .= ':' . $parsed['port'];
                 }
                 
-                // Get access token using client credentials
-                $clientId = $identity->css_client_id;
-                $clientSecret = decrypt($identity->css_client_secret);
+                // Use email/password login to get CSS-Account-Token for pod management
+                $email = $identity->css_email;
+                $password = decrypt($identity->css_password);
                 
-                $accessToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $solid->oidc);
+                Log::info('[CSS POD CREATION] Logging in with email/password for pod management');
                 
-                if (!$accessToken) {
-                    throw new \Exception('Failed to get CSS access token');
+                $authorization = $cssAccountService->login($issuer, $email, $password);
+                
+                if (!$authorization) {
+                    throw new \Exception('Failed to login to CSS account for pod creation');
                 }
                 
                 // Get the account API controls to find the pod creation endpoint
                 $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                    'Authorization' => "CSS-Account-Token {$authorization}",
                 ])->get("{$issuer}/.account/");
                 
                 if (!$controlsResponse->successful()) {
@@ -181,7 +183,7 @@ class PodService
                 
                 // Use the account management API to create pod
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                    'Authorization' => "CSS-Account-Token {$authorization}",
                     'Content-Type' => 'application/json',
                 ])->post($podControlUrl, [
                     'name' => $podSlug,
@@ -355,16 +357,15 @@ class PodService
                         $issuer .= ':' . $parsed['port'];
                     }
                     
-                    $clientId = $identity->css_client_id;
-                    $clientSecret = decrypt($identity->css_client_secret);
-                    $solid = SolidClient::create(['identity' => $identity]);
+                    $email = $identity->css_email;
+                    $password = decrypt($identity->css_password);
                     
-                    $accessToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $solid->oidc);
+                    $authorization = $cssAccountService->login($issuer, $email, $password);
                     
-                    if ($accessToken) {
+                    if ($authorization) {
                         // Get account controls
                         $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                            'Authorization' => "CSS-Account-Token {$accessToken}",
+                            'Authorization' => "CSS-Account-Token {$authorization}",
                         ])->get("{$issuer}/.account/");
                         
                         if ($controlsResponse->successful()) {
@@ -374,7 +375,7 @@ class PodService
                             if ($podControlUrl) {
                                 // Get pods from account management API
                                 $podsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                                    'Authorization' => "CSS-Account-Token {$authorization}",
                                 ])->get($podControlUrl);
                                 
                                 if ($podsResponse->successful()) {
