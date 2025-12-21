@@ -17,7 +17,7 @@ export default class PodsIndexController extends Controller {
         {
             label: 'Pod',
             valuePath: 'name',
-            width: '80%',
+            width: '60%',
             cellComponent: 'table/cell/anchor',
             onClick: this.explorePod,
         },
@@ -27,8 +27,13 @@ export default class PodsIndexController extends Controller {
             width: '5%',
         },
         {
-            label: 'Created At',
-            valuePath: 'created_at',
+            label: 'Type',
+            valuePath: 'type',
+            width: '10%',
+        },
+        {
+            label: 'Last Modified',
+            valuePath: 'last_modified',
             width: '15%',
         },
         {

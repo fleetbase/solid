@@ -14,6 +14,6 @@
     <Button @icon="plus" @iconPrefix="fas" @type="primary" @text="Create new Pod" class="mr-2" @onClick={{this.createPod}} />
 </Layout::Section::Header>
 <Layout::Section::Body>
-    <Table @rows={{@model}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} @tfootVerticalOffset="53" @tfootVerticalOffsetElements=".next-view-section-subheader" />
+    <Table @rows={{@model.pods}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} />
 </Layout::Section::Body>
 {{outlet}}
