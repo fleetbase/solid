@@ -124,12 +124,29 @@ class PodService
             Log::info('[USING CSS ACCOUNT MANAGEMENT API]');
             
             try {
-                // Get issuer from token response
+                // Get WebID and extract issuer from it
                 $tokenResponse = $identity->token_response;
-                $issuer = $tokenResponse['id_token_claims']['iss'] ?? config('solid.server.url', 'http://localhost:3000');
+                $idToken = data_get($tokenResponse, 'id_token');
+                
+                if (!$idToken) {
+                    throw new \Exception('No ID token available');
+                }
+                
+                $solid = SolidClient::create(['identity' => $identity]);
+                $webId = $solid->oidc->getWebIdFromIdToken($idToken);
+                
+                if (!$webId) {
+                    throw new \Exception('Could not extract WebID from ID token');
+                }
+                
+                // Extract issuer from WebID URL
+                $parsed = parse_url($webId);
+                $issuer = $parsed['scheme'] . '://' . $parsed['host'];
+                if (isset($parsed['port'])) {
+                    $issuer .= ':' . $parsed['port'];
+                }
                 
                 // Get access token using client credentials
-                $solid = SolidClient::create(['identity' => $identity]);
                 $clientId = $identity->css_client_id;
                 $clientSecret = decrypt($identity->css_client_secret);
                 
