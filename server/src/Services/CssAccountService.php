@@ -158,7 +158,7 @@ class CssAccountService
             }
 
             // Create DPoP proof for token request
-            $dpop = $oidcClient->createDPoP($tokenEndpoint, 'POST');
+            $dpop = $oidcClient->createDPoP('POST', $tokenEndpoint);
 
             // Encode credentials
             $authString = urlencode($clientId) . ':' . urlencode($clientSecret);
