@@ -1,1 +1,1 @@
-export { default } from '@fleetbase/solid-addon/components/modals/import-solid-resources';
+export { default } from '@fleetbase/solid-engine/components/modals/import-solid-resources';
