@@ -31,12 +31,29 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         }
         $this->setCodeChallengeMethod('S256');
         $this->setClientName(data_get($options, 'clientName', CLIENT_NAME));
-        $this->setClientID(data_get($options, 'clientID'));
-        $this->setClientSecret(data_get($options, 'clientSecret'));
+        
+        // Only set client credentials if they are provided
+        $clientID = data_get($options, 'clientID');
+        if ($clientID !== null) {
+            $this->setClientID($clientID);
+        }
+        
+        $clientSecret = data_get($options, 'clientSecret');
+        if ($clientSecret !== null) {
+            $this->setClientSecret($clientSecret);
+        }
 
-        // Restore client credentials
-        if (isset($options['restore'])) {
-            $this->restoreClientCredentials();
+        // Restore client credentials if requested or if identity is provided without clientID
+        if (isset($options['restore']) || ($this->identity instanceof SolidIdentity && $clientID === null)) {
+            try {
+                $this->restoreClientCredentials();
+            } catch (\Exception $e) {
+                // Credentials not yet saved, which is fine during initial registration
+                Log::debug('[OIDC] Client credentials not yet available for restoration', [
+                    'identity_uuid' => $this->identity?->uuid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
