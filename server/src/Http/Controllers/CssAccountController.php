@@ -79,19 +79,34 @@ class CssAccountController extends BaseController
                 ], 401);
             }
 
-            // Get WebID from token response
+            // Get WebID from ID token
             $tokenResponse = $identity->token_response;
-            $webId = $tokenResponse['id_token_claims']['webid'] ?? null;
+            $idToken = data_get($tokenResponse, 'id_token');
+            
+            if (!$idToken) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No ID token available. Please re-authenticate.',
+                ], 400);
+            }
+
+            // Create Solid client to extract WebID from ID token
+            $solid = SolidClient::create(['identity' => $identity]);
+            $webId = $solid->oidc->getWebIdFromIdToken($idToken);
 
             if (!$webId) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'WebID not found in token response.',
+                    'error' => 'WebID not found in ID token.',
                 ], 400);
             }
 
-            // Get issuer from token response or config
-            $issuer = $tokenResponse['id_token_claims']['iss'] ?? Utils::getSolidServerUrl();
+            // Get issuer from WebID
+            $parsed = parse_url($webId);
+            $issuer = $parsed['scheme'] . '://' . $parsed['host'];
+            if (isset($parsed['port'])) {
+                $issuer .= ':' . $parsed['port'];
+            }
 
             Log::info('[CSS SETUP START]', [
                 'identity_uuid' => $identity->uuid,
