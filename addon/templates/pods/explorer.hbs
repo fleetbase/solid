@@ -12,7 +12,7 @@
             </div>
         </DropdownButton>
     {{/if}}
-    <Button @icon="plus" @iconPrefix="fas" @type="primary" @text="Create new Something" class="mr-2" @onClick={{this.createSomething}} />
+    <Button @icon="download" @iconPrefix="fas" @type="primary" @text="Import Resources" class="mr-2" @onClick={{this.importResources}} />
 </ExplorerHeader>
 <Layout::Section::Body>
     <Table @rows={{@model.contents}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} @tfootVerticalOffset="53" @tfootVerticalOffsetElements=".next-view-section-subheader" />

@@ -5,6 +5,7 @@ namespace Fleetbase\Solid\Http\Controllers;
 use Fleetbase\Http\Controllers\Controller as BaseController;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Fleetbase\Solid\Services\PodService;
+use Fleetbase\Solid\Services\ResourceSyncService;
 use Fleetbase\Solid\Services\VehicleSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,11 +14,13 @@ class PodController extends BaseController
 {
     protected PodService $podService;
     protected VehicleSyncService $vehicleSyncService;
+    protected ResourceSyncService $resourceSyncService;
 
-    public function __construct(PodService $podService, VehicleSyncService $vehicleSyncService)
+    public function __construct(PodService $podService, VehicleSyncService $vehicleSyncService, ResourceSyncService $resourceSyncService)
     {
-        $this->podService         = $podService;
-        $this->vehicleSyncService = $vehicleSyncService;
+        $this->podService          = $podService;
+        $this->vehicleSyncService  = $vehicleSyncService;
+        $this->resourceSyncService = $resourceSyncService;
     }
 
     /**
@@ -243,6 +246,67 @@ class PodController extends BaseController
             ]);
 
             return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Import Fleetops resources into a pod.
+     */
+    public function importResources(Request $request, string $podId)
+    {
+        try {
+            $identity = SolidIdentity::current();
+
+            if (!$identity || !$identity->getAccessToken()) {
+                return response()->json(['error' => 'Not authenticated'], 401);
+            }
+
+            $request->validate([
+                'resource_types' => 'required|array',
+                'resource_types.*' => 'in:vehicles,drivers,contacts,orders',
+            ]);
+
+            $resourceTypes = $request->input('resource_types');
+            
+            // Get pod URL from pod ID
+            $pods = $this->podService->getUserPods($identity);
+            $pod = collect($pods)->firstWhere('id', $podId);
+            
+            if (!$pod) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Pod not found',
+                ], 404);
+            }
+
+            $podUrl = $pod['url'];
+
+            Log::info('[IMPORTING RESOURCES]', [
+                'pod_id' => $podId,
+                'pod_url' => $podUrl,
+                'resource_types' => $resourceTypes,
+            ]);
+
+            $result = $this->resourceSyncService->importResources($identity, $podUrl, $resourceTypes);
+
+            return response()->json([
+                'success' => true,
+                'imported' => $result['imported'],
+                'imported_count' => $result['total_count'],
+                'errors' => $result['errors'],
+                'message' => "Successfully imported {$result['total_count']} resources",
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[IMPORT RESOURCES ERROR]', [
+                'pod_id' => $podId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
                 'error' => $e->getMessage(),
             ], 500);
         }

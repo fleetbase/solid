@@ -1,0 +1,123 @@
+<Modal::Default @modalIsOpened={{@modalIsOpened}} @options={{@options}} @confirm={{@onConfirm}} @decline={{@onDecline}}>
+    <div class="modal-body-container">
+        <div class="space-y-4">
+            <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                <div class="flex items-start">
+                    <FaIcon @icon="info-circle" class="text-blue-500 mr-3 mt-0.5" />
+                    <div>
+                        <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">Import Fleetops Resources</h4>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                            Select the types of resources you want to import into this pod. All resources of the selected types will be synced to your Solid pod in RDF format.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <label class="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                    <input 
+                        type="checkbox" 
+                        checked={{@options.resourceTypes.vehicles}}
+                        {{on "change" (fn @options.toggleResourceType "vehicles")}}
+                        class="mt-1 mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <FaIcon @icon="truck" class="text-gray-600 dark:text-gray-400 mr-2" />
+                            <span class="font-medium text-gray-900 dark:text-white">Vehicles</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Import all vehicles from your fleet including make, model, year, VIN, and status
+                        </p>
+                    </div>
+                </label>
+
+                <label class="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                    <input 
+                        type="checkbox" 
+                        checked={{@options.resourceTypes.drivers}}
+                        {{on "change" (fn @options.toggleResourceType "drivers")}}
+                        class="mt-1 mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <FaIcon @icon="user" class="text-gray-600 dark:text-gray-400 mr-2" />
+                            <span class="font-medium text-gray-900 dark:text-white">Drivers</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Import all drivers including contact information, license details, and assignments
+                        </p>
+                    </div>
+                </label>
+
+                <label class="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                    <input 
+                        type="checkbox" 
+                        checked={{@options.resourceTypes.contacts}}
+                        {{on "change" (fn @options.toggleResourceType "contacts")}}
+                        class="mt-1 mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <FaIcon @icon="address-book" class="text-gray-600 dark:text-gray-400 mr-2" />
+                            <span class="font-medium text-gray-900 dark:text-white">Contacts & Customers</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Import all contacts and customers including names, addresses, and contact details
+                        </p>
+                    </div>
+                </label>
+
+                <label class="flex items-start p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                    <input 
+                        type="checkbox" 
+                        checked={{@options.resourceTypes.orders}}
+                        {{on "change" (fn @options.toggleResourceType "orders")}}
+                        class="mt-1 mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <FaIcon @icon="box" class="text-gray-600 dark:text-gray-400 mr-2" />
+                            <span class="font-medium text-gray-900 dark:text-white">Orders</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Import all orders including delivery details, status, tracking, and payloads
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            {{#if @options.importProgress}}
+                <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <Spinner class="mr-3" />
+                        <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Importing Resources...</h4>
+                    </div>
+                    <p class="text-sm text-blue-700 dark:text-blue-300">{{@options.importProgress}}</p>
+                </div>
+            {{/if}}
+
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">What happens during import?</h4>
+                <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <li class="flex items-start">
+                        <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                        Resources are converted to RDF format (Turtle)
+                    </li>
+                    <li class="flex items-start">
+                        <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                        Each resource is stored as a separate file in the pod
+                    </li>
+                    <li class="flex items-start">
+                        <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                        Existing resources with the same ID will be updated
+                    </li>
+                    <li class="flex items-start">
+                        <FaIcon @icon="check" class="text-green-500 mr-2 mt-0.5 text-xs" />
+                        You can re-import anytime to sync latest changes
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</Modal::Default>

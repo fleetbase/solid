@@ -96,6 +96,55 @@ export default class PodsExplorerController extends Controller {
         return this.hostRouter.transitionTo('console.solid-protocol.pods.explorer', this.pod, { queryParams: { cursor: this.trackCursor(content), pod: this.pod } });
     }
 
+    @action importResources() {
+        const resourceTypes = {
+            vehicles: false,
+            drivers: false,
+            contacts: false,
+            orders: false,
+        };
+
+        this.modalsManager.show('modals/import-resources', {
+            title: 'Import Fleetops Resources',
+            acceptButtonText: 'Import Selected',
+            acceptButtonIcon: 'download',
+            resourceTypes,
+            importProgress: null,
+            toggleResourceType: (type) => {
+                resourceTypes[type] = !resourceTypes[type];
+            },
+            confirm: async (modal) => {
+                const selected = Object.keys(resourceTypes).filter(type => resourceTypes[type]);
+                
+                if (selected.length === 0) {
+                    return this.notifications.warning('Please select at least one resource type to import.');
+                }
+
+                try {
+                    modal.setOption('importProgress', `Importing ${selected.join(', ')}...`);
+                    
+                    const response = await this.fetch.post(`pods/${this.model.id}/import`, {
+                        resource_types: selected
+                    }, { 
+                        namespace: 'solid/int/v1' 
+                    });
+
+                    if (response.success) {
+                        this.notifications.success(`Successfully imported ${response.imported_count} resources!`);
+                        this.hostRouter.refresh();
+                        return modal.done();
+                    }
+                    
+                    this.notifications.error(response.error || 'Failed to import resources.');
+                    modal.setOption('importProgress', null);
+                } catch (error) {
+                    modal.setOption('importProgress', null);
+                    this.notifications.serverError(error);
+                }
+            },
+        });
+    }
+
     @action deleteSomething() {
         this.modalsManager.confirm({
             title: 'Are you sure you want to delete this content?',
