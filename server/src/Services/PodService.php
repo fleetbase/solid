@@ -435,18 +435,25 @@ class PodService
     /**
      * Get pod contents.
      */
-    public function getPodContents(SolidIdentity $identity, string $podId): array
+    public function getPodContents(SolidIdentity $identity, string $podIdOrUrl): array
     {
         try {
-            // Find the pod URL by ID
-            $pods = $this->getUserPods($identity);
-            $pod  = collect($pods)->firstWhere('id', $podId);
+            // If it's a URL (starts with http), use it directly
+            // Otherwise, look it up as a pod ID (for backward compatibility)
+            if (str_starts_with($podIdOrUrl, 'http://') || str_starts_with($podIdOrUrl, 'https://')) {
+                $podUrl = $podIdOrUrl;
+            } else {
+                // Find the pod URL by ID (old multi-pod architecture)
+                $pods = $this->getUserPods($identity);
+                $pod  = collect($pods)->firstWhere('id', $podIdOrUrl);
 
-            if (!$pod) {
-                throw new \Exception('Pod not found');
+                if (!$pod) {
+                    throw new \Exception('Pod not found');
+                }
+
+                $podUrl = $pod['url'];
             }
 
-            $podUrl   = $pod['url'];
             $response = $identity->request('get', $podUrl);
 
             if (!$response->successful()) {
@@ -456,7 +463,7 @@ class PodService
             return $this->parseContainerContents($response->body());
         } catch (\Throwable $e) {
             Log::error('[GET POD CONTENTS ERROR]', [
-                'pod_id' => $podId,
+                'pod_id_or_url' => $podIdOrUrl,
                 'error'  => $e->getMessage(),
             ]);
             throw $e;
