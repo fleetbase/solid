@@ -4,17 +4,14 @@ import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import { task, timeout } from 'ember-concurrency';
 
-export default class PodsExplorerController extends Controller {
+export default class DataIndexController extends Controller {
     @service hostRouter;
     @service fetch;
     @service notifications;
-    @service explorerState;
     @service modalsManager;
     @service crud;
-    @tracked cursor = '';
-    @tracked pod = '';
     @tracked query = '';
-    queryParams = ['cursor', 'pod', 'query'];
+    queryParams = ['query'];
     columns = [
         {
             label: 'Name',
@@ -60,7 +57,7 @@ export default class PodsExplorerController extends Controller {
                     },
                     {
                         label: 'Delete',
-                        fn: this.deleteSomething,
+                        fn: this.deleteItem,
                     },
                 ];
             },
@@ -76,24 +73,52 @@ export default class PodsExplorerController extends Controller {
     }
 
     @action back() {
-        if (typeof this.cursor === 'string' && this.cursor.length && this.cursor !== this.model.id) {
-            const current = this.reverseCursor();
-            return this.hostRouter.transitionTo('console.solid-protocol.pods.explorer', current, { queryParams: { cursor: this.cursor, pod: this.pod } });
-        }
-
-        this.hostRouter.transitionTo('console.solid-protocol.pods.index');
+        this.hostRouter.transitionTo('console.solid-protocol.home');
     }
 
     @action viewContents(content) {
         if (content.type === 'folder') {
-            return this.hostRouter.transitionTo('console.solid-protocol.pods.explorer', content, { queryParams: { cursor: this.trackCursor(content), pod: this.pod } });
+            return this.hostRouter.transitionTo('console.solid-protocol.data.content', content.slug);
         }
 
         if (content.type === 'file') {
-            return this.hostRouter.transitionTo('console.solid-protocol.pods.explorer.content', content);
+            // Open file viewer or download
+            window.open(content.url, '_blank');
         }
+    }
 
-        return this.hostRouter.transitionTo('console.solid-protocol.pods.explorer', this.pod, { queryParams: { cursor: this.trackCursor(content), pod: this.pod } });
+    @action createFolder() {
+        this.modalsManager.show('modals/create-folder', {
+            title: 'Create New Folder',
+            acceptButtonText: 'Create',
+            acceptButtonIcon: 'folder-plus',
+            folderName: '',
+            confirm: async (modal) => {
+                const folderName = modal.getOption('folderName');
+                
+                if (!folderName) {
+                    return this.notifications.warning('Please enter a folder name.');
+                }
+
+                try {
+                    const response = await this.fetch.post('data/folder', {
+                        name: folderName
+                    }, { 
+                        namespace: 'solid/int/v1' 
+                    });
+
+                    if (response.success) {
+                        this.notifications.success(`Folder "${folderName}" created successfully!`);
+                        this.hostRouter.refresh();
+                        return modal.done();
+                    }
+                    
+                    this.notifications.error(response.error || 'Failed to create folder.');
+                } catch (error) {
+                    this.notifications.serverError(error);
+                }
+            },
+        });
     }
 
     @action importResources() {
@@ -123,7 +148,7 @@ export default class PodsExplorerController extends Controller {
                 try {
                     modal.setOption('importProgress', `Importing ${selected.join(', ')}...`);
                     
-                    const response = await this.fetch.post(`pods/${this.model.id}/import`, {
+                    const response = await this.fetch.post('data/import', {
                         resource_types: selected
                     }, { 
                         namespace: 'solid/int/v1' 
@@ -145,12 +170,20 @@ export default class PodsExplorerController extends Controller {
         });
     }
 
-    @action deleteSomething() {
+    @action deleteItem(item) {
         this.modalsManager.confirm({
-            title: 'Are you sure you want to delete this content?',
-            body: 'Deleting this Content will remove this content from this pod. This is irreversible!',
+            title: `Are you sure you want to delete this ${item.type}?`,
+            body: `Deleting "${item.name}" will permanently remove it from your storage. This is irreversible!`,
             acceptButtonText: 'Delete Forever',
-            confirm: () => {},
+            confirm: async () => {
+                try {
+                    await this.fetch.delete(`data/${item.type}/${item.slug}`, {}, { namespace: 'solid/int/v1' });
+                    this.notifications.success(`${item.type === 'folder' ? 'Folder' : 'File'} deleted successfully!`);
+                    this.hostRouter.refresh();
+                } catch (error) {
+                    this.notifications.serverError(error);
+                }
+            },
         });
     }
 
@@ -166,33 +199,9 @@ export default class PodsExplorerController extends Controller {
         });
     }
 
-    trackCursor(content) {
-        if (typeof this.cursor === 'string' && this.cursor.includes(content.id)) {
-            const segments = this.cursor.split(':');
-            const currentIndex = segments.findIndex((segment) => segment === content.id);
-
-            if (currentIndex > -1) {
-                const retainedSegments = segments.slice(0, currentIndex + 1);
-                this.cursor = retainedSegments.join(':');
-                return this.cursor;
-            }
-        }
-
-        this.cursor = this.cursor ? `${this.cursor}:${content.id}` : content.id;
-        return this.cursor;
-    }
-
-    reverseCursor() {
-        const segments = this.cursor.split(':');
-        segments.pop();
-        const current = segments[segments.length - 1];
-        this.cursor = segments.join(':');
-        return current;
-    }
-
     @task({ restartable: true }) *search(event) {
         yield timeout(300);
         const query = typeof event.target.value === 'string' ? event.target.value : '';
-        this.hostRouter.transitionTo('console.solid-protocol.pods.explorer', this.model.id, { queryParams: { cursor: this.cursor, query } });
+        this.hostRouter.transitionTo('console.solid-protocol.data.index', { queryParams: { query } });
     }
 }

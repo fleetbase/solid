@@ -18,7 +18,7 @@
             <div class="max-w-4xl mx-auto space-y-4">
                 <div class="pb-4">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back!</h1>
-                    <p class="text-gray-600 dark:text-gray-400">You are successfully connected to your Solid Pod.</p>
+                    <p class="text-gray-600 dark:text-gray-400">You are successfully connected to your Solid storage.</p>
                 </div>
 
                 <ContentPanel @title="Your Solid Identity" @open={{true}} @wrapperClass="bordered-classic">
@@ -62,10 +62,10 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
                             <FaIcon @icon="folder-tree" @size="2x" class="text-blue-600 dark:text-blue-400 mb-3" />
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Browse Pods</h3>
-                            <p class="text-gray-600 dark:text-gray-400 mb-4">Explore and manage your Solid pods</p>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Browse Data</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Explore and manage your Fleetops data in Solid</p>
                             <div class="flex items-center justify-center">
-                                <Button @text="Browse Pods" @icon="folder-tree" @type="primary" class="w-full" @onClick={{perform this.navigateToPods}} />
+                                <Button @text="Browse Data" @icon="database" @type="primary" class="w-full" @onClick={{perform this.navigateToPods}} />
                             </div>
                         </div>
                         <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -79,7 +79,7 @@
                         <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
                             <FaIcon @icon="sync" @size="2x" class="text-purple-600 dark:text-purple-400 mb-3" />
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sync Data</h3>
-                            <p class="text-gray-600 dark:text-gray-400 mb-4">Sync your Fleetbase data to Solid pods</p>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Sync your Fleetbase data to Solid storage</p>
                             <div class="flex items-center justify-center">
                                 <Button @text="Coming Soon" @icon="sync" @disabled={{true}} />
                             </div>
@@ -124,7 +124,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sign up for a Solid account</h3>
-                                <p class="text-gray-600 dark:text-gray-400">Create your own Pod and WebID to get started with decentralized data storage.</p>
+                                <p class="text-gray-600 dark:text-gray-400">Create your Solid account and WebID to get started with decentralized data storage.</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -142,7 +142,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sync your data</h3>
-                                <p class="text-gray-600 dark:text-gray-400">Sync vehicles, drivers, and orders from Fleetbase to your Solid pods.</p>
+                                <p class="text-gray-600 dark:text-gray-400">Sync vehicles, drivers, and orders from Fleetbase to your Solid storage.</p>
                             </div>
                         </div>
                     </div>

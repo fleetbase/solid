@@ -1,17 +1,7 @@
 <EmberWormhole @to="sidebar-menu-items">
     <Layout::Sidebar::Item @route="console.solid-protocol.home" @icon="home">Home</Layout::Sidebar::Item>
-    <Layout::Sidebar::Item @route="console.solid-protocol.pods" @icon="folder-tree">Pods</Layout::Sidebar::Item>
-    {{!-- <Layout::Sidebar::Panel @open={{true}} @title="Pods">
-        <Layout::Sidebar::Item @route="console.solid-protocol.pods" @icon="folder-tree">All</Layout::Sidebar::Item>
-        {{#each this.pods as |pod|}}
-            <LinkTo @route="pods.explorer" @model={{pod}} @query={{hash id=pod.id pod=pod.id}} class="next-nav-item">
-                <div class="next-nav-item-icon-container">
-                    <FaIcon @icon="folder" @size="xs" />
-                </div>
-                <div class="truncate w-10/12 ">{{pod.name}}</div>
-            </LinkTo>
-        {{/each}}
-    </Layout::Sidebar::Panel> --}}
+    <Layout::Sidebar::Item @route="console.solid-protocol.data" @icon="database">Data</Layout::Sidebar::Item>
+
     <Layout::Sidebar::Item @route="console.solid-protocol.account" @icon="user">Account</Layout::Sidebar::Item>
 </EmberWormhole>
 

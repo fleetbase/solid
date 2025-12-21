@@ -1,0 +1,48 @@
+<Overlay @isOpen={{true}} @position="right" @noBackdrop={{true}} @fullHeight={{true}} @width="800px" @isResizable={{true}}>
+    <Overlay::Header @title={{@model.name}} @hideStatusDot={{true}} @titleWrapperClass="leading-5">
+        <div class="flex flex-1 justify-end">
+            <Button @type="default" @icon="times" @helpText="Close" @onClick={{this.back}} />
+        </div>
+    </Overlay::Header>
+
+    <Overlay::Body class="p-6">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">File Information</label>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Name:</span>
+                        <span class="text-gray-900 dark:text-white font-medium">{{@model.name}}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Type:</span>
+                        <span class="text-gray-900 dark:text-white capitalize">{{@model.type}}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Size:</span>
+                        <span class="text-gray-900 dark:text-white">{{@model.size}}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Created:</span>
+                        <span class="text-gray-900 dark:text-white">{{@model.created_at}}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{#if @model.url}}
+                <div>
+                    <Button @text="Open File" @icon="external-link-alt" @type="primary" @onClick={{this.viewFile}} class="w-full" />
+                </div>
+            {{/if}}
+
+            {{#if @model.content}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 max-h-96 overflow-y-auto">
+                        <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{@model.content}}</pre>
+                    </div>
+                </div>
+            {{/if}}
+        </div>
+    </Overlay::Body>
+</Overlay>

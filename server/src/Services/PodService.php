@@ -740,7 +740,6 @@ class PodService
 
         return $turtle;
     }
-}
 
     /**
      * Get pod URL from WebID.
@@ -768,3 +767,86 @@ class PodService
         
         return $podUrl;
     }
+
+    /**
+     * Create a folder (container) in the pod.
+     */
+    public function createFolder(SolidIdentity $identity, string $folderUrl): bool
+    {
+        try {
+            Log::info('[CREATE FOLDER]', [
+                'folder_url' => $folderUrl,
+            ]);
+
+            // Ensure folder URL ends with /
+            $folderUrl = rtrim($folderUrl, '/') . '/';
+
+            // Create the folder using PUT request
+            $response = $identity->request('put', $folderUrl, [
+                'headers' => [
+                    'Content-Type' => 'text/turtle',
+                    'Link' => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
+                ],
+            ]);
+
+            if ($response->successful()) {
+                Log::info('[FOLDER CREATED]', [
+                    'folder_url' => $folderUrl,
+                    'status' => $response->status(),
+                ]);
+                return true;
+            }
+
+            Log::error('[FOLDER CREATE FAILED]', [
+                'folder_url' => $folderUrl,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('[FOLDER CREATE ERROR]', [
+                'folder_url' => $folderUrl,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete a resource (file or folder) from the pod.
+     */
+    public function deleteResource(SolidIdentity $identity, string $resourceUrl): bool
+    {
+        try {
+            Log::info('[DELETE RESOURCE]', [
+                'resource_url' => $resourceUrl,
+            ]);
+
+            // Delete the resource using DELETE request
+            $response = $identity->request('delete', $resourceUrl);
+
+            if ($response->successful()) {
+                Log::info('[RESOURCE DELETED]', [
+                    'resource_url' => $resourceUrl,
+                    'status' => $response->status(),
+                ]);
+                return true;
+            }
+
+            Log::error('[RESOURCE DELETE FAILED]', [
+                'resource_url' => $resourceUrl,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('[RESOURCE DELETE ERROR]', [
+                'resource_url' => $resourceUrl,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+}

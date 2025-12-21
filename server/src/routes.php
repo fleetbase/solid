@@ -40,22 +40,14 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
                             $router->get('account', 'SolidController@getAccountIndex');
                             $router->get('profile', 'SolidController@getProfileData');
 
-                            // Pod management routes
-                            $router->get('pods', 'PodController@index');
-                            $router->post('pods', 'PodController@create');
-                            $router->get('pods/{podId}', 'PodController@show');
-                            $router->delete('pods/{podId}', 'PodController@destroy');
-                            $router->post('import-resources', 'PodController@importResources');
-                            
-                            // Container management
-                            $router->get('containers', 'ContainerController@index');
-                            $router->post('containers', 'ContainerController@create');
-                            $router->delete('containers/{containerName}', 'ContainerController@destroy');
+                            // Data management routes (single-pod architecture)
+                            $router->get('data', 'DataController@index');
+                            $router->get('data/folder/{slug}', 'DataController@showFolder');
+                            $router->post('data/folder', 'DataController@createFolder');
+                            $router->delete('data/{type}/{slug}', 'DataController@deleteItem');
+                            $router->post('data/import', 'DataController@importResources');
 
-                            // // Vehicle sync routes
-                            // $router->get('pods/vehicles-for-sync', 'PodController@getVehiclesForSync');
-                            // $router->post('pods/sync-vehicles', 'PodController@syncVehicles');
-                            // $router->get('pods/{podId}/sync-status', 'PodController@getSyncStatus');
+
 
                             // Resource sync endpoints
                             $router->get('sync-status', 'SolidController@getSyncStatus');

@@ -139,7 +139,7 @@ export default class HomeController extends Controller {
     }
 
     @task *navigateToPods() {
-        this.hostRouter.transitionTo('console.solid-protocol.pods');
+        this.hostRouter.transitionTo('console.solid-protocol.data');
     }
 
     @task *navigateToAccount() {
