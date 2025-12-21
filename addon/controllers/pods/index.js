@@ -95,7 +95,7 @@ export default class PodsIndexController extends Controller {
                 description: '',
             },
             requestPodCreation: this.requestPodCreation,
-            confirm: async () => {
+            confirm: async (modal) => {
                 const pod = this.modalsManager.getOption('pod');
 
                 if (!pod.name.trim()) {
@@ -103,13 +103,15 @@ export default class PodsIndexController extends Controller {
                 }
 
                 try {
-                    const response = this.requestPodCreation.perform(pod);
+                    const response = await this.requestPodCreation.perform(pod);
                     if (response.success) {
-                        this.notifications.success(`Pod "${this.podName}" created successfully!`);
+                        this.notifications.success(`Pod "${pod.name}" created successfully!`);
+                        // Refresh the pod list
+                        this.hostRouter.refresh();
                         return modal.done();
                     }
                     
-                    this.notifications.error('Failed to create pod.');
+                    this.notifications.error(response.error || 'Failed to create pod.');
                 } catch (error) {
                     this.notifications.serverError(error);
                 }
