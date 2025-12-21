@@ -8,7 +8,9 @@ export default class HomeController extends Controller {
     @service fetch;
     @service notifications;
     @service hostRouter;
+    @service modalsManager;
     @tracked authStatus = null;
+    @tracked cssCredentialsStatus = null;
 
     constructor() {
         super(...arguments);
@@ -19,9 +21,65 @@ export default class HomeController extends Controller {
         try {
             const authStatus = yield this.fetch.get('authentication-status', {}, { namespace: 'solid/int/v1' });
             this.authStatus = authStatus;
+            
+            // If authenticated, check CSS credentials
+            if (authStatus.authenticated) {
+                yield this.checkCssCredentials.perform();
+            }
         } catch (error) {
             debug('Failed to check authentication status:' + error.message);
             this.authStatus = { authenticated: false, error: error.message };
+        }
+    }
+
+    @task *checkCssCredentials() {
+        try {
+            const status = yield this.fetch.get('css-credentials/check', {}, { namespace: 'solid/int/v1' });
+            this.cssCredentialsStatus = status;
+            
+            // If authenticated but no CSS credentials, show setup modal
+            if (status.authenticated && !status.has_credentials) {
+                this.showCssSetupModal();
+            }
+        } catch (error) {
+            debug('Failed to check CSS credentials:' + error.message);
+        }
+    }
+
+    showCssSetupModal() {
+        this.modalsManager.show('modals/setup-css-credentials', {
+            title: 'Setup CSS Account Credentials',
+            acceptButtonText: 'Setup Credentials',
+            acceptButtonIcon: 'check',
+            cssEmail: '',
+            cssPassword: '',
+            error: null,
+            serverUrl: this.serverUrl,
+            confirm: (modal) => {
+                modal.startLoading();
+                return this.setupCssCredentials.perform(modal.getOptions('cssEmail'), modal.getOptions('cssPassword'), modal);
+            },
+        });
+    }
+
+    @task *setupCssCredentials(email, password, modal) {
+        try {
+            const response = yield this.fetch.post('css-credentials/setup', {
+                email,
+                password,
+            }, { namespace: 'solid/int/v1' });
+            
+            if (response.success) {
+                this.notifications.success('CSS credentials configured successfully!');
+                yield this.checkCssCredentials.perform();
+                modal.done();
+            } else {
+                modal.setOption('error', response.error || 'Failed to setup credentials');
+                modal.stopLoading();
+            }
+        } catch (error) {
+            modal.setOption('error', error.message || 'An error occurred');
+            modal.stopLoading();
         }
     }
 
@@ -80,6 +138,24 @@ export default class HomeController extends Controller {
 
     get userEmail() {
         return this.userProfile.email || 'No email available';
+    }
+
+    get serverUrl() {
+        // Extract server URL from webId or use default
+        const webId = this.webId;
+        if (webId) {
+            try {
+                const url = new URL(webId);
+                return `${url.protocol}//${url.host}`;
+            } catch (e) {
+                // Fallback
+            }
+        }
+        return 'http://localhost:3000';
+    }
+
+    get hasCssCredentials() {
+        return this.cssCredentialsStatus?.has_credentials === true;
     }
 
     get storageLocations() {
