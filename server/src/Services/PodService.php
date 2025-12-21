@@ -156,11 +156,29 @@ class PodService
                     throw new \Exception('Failed to get CSS access token');
                 }
                 
+                // Get the account API controls to find the pod creation endpoint
+                $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                ])->get("{$issuer}/.account/");
+                
+                if (!$controlsResponse->successful()) {
+                    throw new \Exception('Failed to get account controls');
+                }
+                
+                $controls = $controlsResponse->json();
+                $podControlUrl = data_get($controls, 'controls.account.pod');
+                
+                if (!$podControlUrl) {
+                    throw new \Exception('Pod control URL not found in account controls');
+                }
+                
+                Log::info('[CSS POD CONTROL URL]', ['url' => $podControlUrl]);
+                
                 // Use the account management API to create pod
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
                     'Authorization' => "CSS-Account-Token {$accessToken}",
                     'Content-Type' => 'application/json',
-                ])->post("{$issuer}/.account/", [
+                ])->post($podControlUrl, [
                     'name' => $podSlug,
                 ]);
                 
@@ -317,8 +335,69 @@ class PodService
         try {
             $profile    = $this->getProfileData($identity);
             $storageUrl = $this->getStorageUrlFromWebId($profile['webid']);
+            $webId      = $profile['webid'];
 
             $pods = [];
+            
+            // Try to get pods from CSS Account Management API first
+            $cssAccountService = app(CssAccountService::class);
+            if ($cssAccountService->hasCredentials($identity)) {
+                try {
+                    // Extract issuer from WebID
+                    $parsed = parse_url($webId);
+                    $issuer = $parsed['scheme'] . '://' . $parsed['host'];
+                    if (isset($parsed['port'])) {
+                        $issuer .= ':' . $parsed['port'];
+                    }
+                    
+                    $clientId = $identity->css_client_id;
+                    $clientSecret = decrypt($identity->css_client_secret);
+                    $solid = SolidClient::create(['identity' => $identity]);
+                    
+                    $accessToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $solid->oidc);
+                    
+                    if ($accessToken) {
+                        // Get account controls
+                        $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
+                            'Authorization' => "CSS-Account-Token {$accessToken}",
+                        ])->get("{$issuer}/.account/");
+                        
+                        if ($controlsResponse->successful()) {
+                            $controls = $controlsResponse->json();
+                            $podControlUrl = data_get($controls, 'controls.account.pod');
+                            
+                            if ($podControlUrl) {
+                                // Get pods from account management API
+                                $podsResponse = \Illuminate\Support\Facades\Http::withHeaders([
+                                    'Authorization' => "CSS-Account-Token {$accessToken}",
+                                ])->get($podControlUrl);
+                                
+                                if ($podsResponse->successful()) {
+                                    $podsData = $podsResponse->json();
+                                    $accountPods = data_get($podsData, 'pods', []);
+                                    
+                                    Log::info('[CSS ACCOUNT PODS]', ['pods' => $accountPods]);
+                                    
+                                    foreach ($accountPods as $podUrl => $accountUrl) {
+                                        $podName = $this->extractPodName($podUrl);
+                                        $pods[] = [
+                                            'id' => Str::slug($podName),
+                                            'name' => $podName,
+                                            'url' => $podUrl,
+                                            'type' => 'pod',
+                                            'source' => 'css_account',
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[CSS ACCOUNT PODS FETCH WARNING]', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // Get the main storage pod
             try {

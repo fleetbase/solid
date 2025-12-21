@@ -116,9 +116,39 @@ class ResourceSyncService
         // Get current company's resources
         $companyId = session('company');
         
-        return $modelClass::where('company_uuid', $companyId)
-            ->limit(100) // Limit for now to avoid overwhelming the pod
-            ->get();
+        Log::info('[FETCHING FLEETOPS RESOURCES]', [
+            'resource_type' => $resourceType,
+            'model_class' => $modelClass,
+            'company_id' => $companyId,
+        ]);
+        
+        if (!$companyId) {
+            Log::warning('[NO COMPANY ID]', ['session' => session()->all()]);
+            // Try to get from auth user
+            $user = auth()->user();
+            if ($user && isset($user->company_uuid)) {
+                $companyId = $user->company_uuid;
+                Log::info('[USING USER COMPANY]', ['company_id' => $companyId]);
+            }
+        }
+        
+        if (!$companyId) {
+            Log::error('[CANNOT DETERMINE COMPANY]');
+            return collect([]);
+        }
+        
+        $query = $modelClass::where('company_uuid', $companyId)
+            ->limit(100); // Limit for now to avoid overwhelming the pod
+            
+        $count = $query->count();
+        Log::info('[RESOURCE QUERY]', [
+            'resource_type' => $resourceType,
+            'count' => $count,
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
+        
+        return $query->get();
     }
 
     /**
