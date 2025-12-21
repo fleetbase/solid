@@ -741,3 +741,30 @@ class PodService
         return $turtle;
     }
 }
+
+    /**
+     * Get pod URL from WebID.
+     *
+     * @param string $webId
+     * @return string
+     */
+    public function getPodUrlFromWebId(string $webId): string
+    {
+        // Extract pod URL from WebID
+        // WebID format: http://solid:3000/test/profile/card#me
+        // Pod URL: http://solid:3000/test/
+        
+        $parsed = parse_url($webId);
+        $path = $parsed['path'] ?? '';
+        
+        // Remove /profile/card from the path
+        $podPath = preg_replace('#/profile/card.*$#', '/', $path);
+        
+        $podUrl = $parsed['scheme'] . '://' . $parsed['host'];
+        if (isset($parsed['port'])) {
+            $podUrl .= ':' . $parsed['port'];
+        }
+        $podUrl .= $podPath;
+        
+        return $podUrl;
+    }

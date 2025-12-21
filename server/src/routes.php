@@ -45,7 +45,12 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
                             $router->post('pods', 'PodController@create');
                             $router->get('pods/{podId}', 'PodController@show');
                             $router->delete('pods/{podId}', 'PodController@destroy');
-                            $router->post('pods/{podId}/import', 'PodController@importResources');
+                            $router->post('import-resources', 'PodController@importResources');
+                            
+                            // Container management
+                            $router->get('containers', 'ContainerController@index');
+                            $router->post('containers', 'ContainerController@create');
+                            $router->delete('containers/{containerName}', 'ContainerController@destroy');
 
                             // // Vehicle sync routes
                             // $router->get('pods/vehicles-for-sync', 'PodController@getVehiclesForSync');

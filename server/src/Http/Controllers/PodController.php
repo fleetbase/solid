@@ -254,7 +254,7 @@ class PodController extends BaseController
     /**
      * Import Fleetops resources into a pod.
      */
-    public function importResources(Request $request, string $podId)
+    public function importResources(Request $request)
     {
         try {
             $identity = SolidIdentity::current();
@@ -270,22 +270,12 @@ class PodController extends BaseController
 
             $resourceTypes = $request->input('resource_types');
             
-            // Get pod URL from pod ID
-            $pods = $this->podService->getUserPods($identity);
-            $pod = collect($pods)->firstWhere('id', $podId);
+            // Use the authenticated user's pod (from their WebID)
+            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
             
-            if (!$pod) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Pod not found',
-                ], 404);
-            }
-
-            $podUrl = $pod['url'];
-
             Log::info('[IMPORTING RESOURCES]', [
-                'pod_id' => $podId,
                 'pod_url' => $podUrl,
+                'webid' => $identity->webid,
                 'resource_types' => $resourceTypes,
             ]);
 
