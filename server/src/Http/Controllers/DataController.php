@@ -33,10 +33,12 @@ class DataController extends BaseController
             }
 
             // Get the user's primary pod URL from their WebID
-            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
+            $profile = $this->podService->getProfileData($identity);
+            $webId = $profile['webid'];
+            $podUrl = $this->podService->getPodUrlFromWebId($webId);
             
             Log::info('[DATA INDEX]', [
-                'webid' => $identity->webid,
+                'webid' => $webId,
                 'pod_url' => $podUrl,
             ]);
 
@@ -71,7 +73,9 @@ class DataController extends BaseController
                 return response()->json(['error' => 'Not authenticated'], 401);
             }
 
-            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
+            $profile = $this->podService->getProfileData($identity);
+            $webId = $profile['webid'];
+            $podUrl = $this->podService->getPodUrlFromWebId($webId);
             $folderUrl = rtrim($podUrl, '/') . '/' . ltrim($slug, '/');
 
             Log::info('[FOLDER SHOW]', [
@@ -118,7 +122,9 @@ class DataController extends BaseController
             $folderName = $request->input('name');
             $path = $request->input('path', '');
 
-            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
+            $profile = $this->podService->getProfileData($identity);
+            $webId = $profile['webid'];
+            $podUrl = $this->podService->getPodUrlFromWebId($webId);
             $folderUrl = rtrim($podUrl, '/') . '/' . ltrim($path, '/') . '/' . $folderName . '/';
 
             Log::info('[FOLDER CREATE]', [
@@ -159,7 +165,9 @@ class DataController extends BaseController
                 return response()->json(['error' => 'Not authenticated'], 401);
             }
 
-            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
+            $profile = $this->podService->getProfileData($identity);
+            $webId = $profile['webid'];
+            $podUrl = $this->podService->getPodUrlFromWebId($webId);
             $itemUrl = rtrim($podUrl, '/') . '/' . ltrim($slug, '/');
 
             // Add trailing slash for folders
@@ -213,11 +221,13 @@ class DataController extends BaseController
             $resourceTypes = $request->input('resource_types');
 
             // Use the authenticated user's pod (from their WebID)
-            $podUrl = $this->podService->getPodUrlFromWebId($identity->webid);
+            $profile = $this->podService->getProfileData($identity);
+            $webId = $profile['webid'];
+            $podUrl = $this->podService->getPodUrlFromWebId($webId);
 
             Log::info('[IMPORTING RESOURCES]', [
                 'pod_url'        => $podUrl,
-                'webid'          => $identity->webid,
+                'webid'          => $webId,
                 'resource_types' => $resourceTypes,
             ]);
 
