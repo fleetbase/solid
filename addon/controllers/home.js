@@ -64,6 +64,10 @@ export default class HomeController extends Controller {
 
     @task *setupCssCredentials(email, password, modal) {
         try {
+            // Clear previous errors
+            modal.setOption('error', null);
+            modal.setOption('validationErrors', null);
+            
             const response = yield this.fetch.post('css-credentials/setup', {
                 email,
                 password,
@@ -74,11 +78,27 @@ export default class HomeController extends Controller {
                 yield this.checkCssCredentials.perform();
                 modal.done();
             } else {
-                modal.setOption('error', response.error || 'Failed to setup credentials');
+                // Handle validation errors
+                if (response.errors) {
+                    modal.setOption('validationErrors', response.errors);
+                    modal.setOption('error', 'Please fix the validation errors below');
+                } else {
+                    modal.setOption('error', response.error || 'Failed to setup credentials');
+                }
                 modal.stopLoading();
             }
         } catch (error) {
-            modal.setOption('error', error.message || 'An error occurred');
+            // Handle network or server errors
+            let errorMessage = 'An error occurred while setting up credentials';
+            
+            if (error.errors) {
+                modal.setOption('validationErrors', error.errors);
+                errorMessage = 'Please fix the validation errors below';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            modal.setOption('error', errorMessage);
             modal.stopLoading();
         }
     }
