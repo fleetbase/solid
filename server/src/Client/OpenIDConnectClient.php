@@ -427,6 +427,16 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 'token_preview'  => substr($jwt, 0, 80),
                 'has_placeholder'=> false,
             ]);
+            
+            // Debug: Log full DPoP payload for diagnosis
+            Log::debug('[DPOP PAYLOAD]', [
+                'jti' => $jti,
+                'htm' => $htm,
+                'htu' => $htu,
+                'iat' => $now,
+                'ath' => $payload['ath'] ?? null,
+                'has_ath' => isset($payload['ath']),
+            ]);
 
             return $jwt;
         } catch (\Throwable $e) {
