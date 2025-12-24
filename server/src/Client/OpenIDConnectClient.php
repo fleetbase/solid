@@ -144,8 +144,8 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             'grant_type' => 'authorization_code',
             'code' => $code,
             'redirect_uri' => $this->getRedirectURL(),
-            'client_id' => $this->clientID,
-            'client_secret' => $this->clientSecret,
+            'client_id' => $this->getClientID(),
+            'client_secret' => $this->getClientSecret(),
             'scope' => implode(' ', $this->getScopes()), // CRITICAL: Include scope in token request
         ];
         
@@ -158,7 +158,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         // Handle different authentication methods
         $authorizationHeader = null;
         if ($this->supportsAuthMethod('client_secret_basic', $tokenEndpointAuthMethodsSupported)) {
-            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
+            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->getClientID()) . ':' . urlencode($this->getClientSecret()));
             unset($tokenParams['client_secret'], $tokenParams['client_id']);
         }
         
@@ -172,7 +172,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 unset($tokenParams['client_secret']);
             }
             $tokenParams = array_merge($tokenParams, [
-                'client_id' => $this->clientID,
+                'client_id' => $this->getClientID(),
                 'code_verifier' => $this->getCodeVerifier()
             ]);
         }
