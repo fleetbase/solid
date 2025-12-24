@@ -94,7 +94,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         $registrationResponse = $this->solid->post($registrationUrl, [
             'client_name' => $clientName,
             'redirect_uris' => [$redirectUri],
-            'scope' => 'openid profile webid offline_access solid',
+            'scope' => 'openid webid offline_access',
             ...$requestParams
         ], $requestOptions);
         if ($registrationResponse->successful()) {
@@ -107,7 +107,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 'request_data' => [
                     'client_name' => $clientName,
                     'redirect_uris' => [$redirectUri],
-                    'scope' => 'openid profile webid offline_access solid',
+                    'scope' => 'openid webid offline_access',
                 ],
             ]);
             throw new OpenIDConnectClientException('Error registering: Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them');
@@ -119,7 +119,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     public function authenticate(): bool
     {
         $this->setCodeChallengeMethod('S256');
-        $this->addScope(['openid', 'profile', 'webid', 'offline_access', 'solid']);
+        $this->addScope(['openid', 'webid', 'offline_access']);
 
         return parent::authenticate();
     }
