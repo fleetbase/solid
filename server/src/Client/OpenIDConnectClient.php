@@ -190,7 +190,17 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         }
         
         // Make the token request
-        $this->tokenResponse = json_decode($this->fetchURL($tokenEndpoint, $tokenParams, $headers), false);
+        $rawResponse = $this->fetchURL($tokenEndpoint, $tokenParams, $headers);
+        $this->tokenResponse = json_decode($rawResponse, false);
+        
+        Log::info('[TOKEN RESPONSE FROM CSS]', [
+            'has_access_token' => isset($this->tokenResponse->access_token),
+            'has_id_token' => isset($this->tokenResponse->id_token),
+            'has_refresh_token' => isset($this->tokenResponse->refresh_token),
+            'token_type' => $this->tokenResponse->token_type ?? null,
+            'scope_in_response' => $this->tokenResponse->scope ?? null,
+            'raw_response_length' => strlen($rawResponse),
+        ]);
         
         return $this->tokenResponse;
     }
