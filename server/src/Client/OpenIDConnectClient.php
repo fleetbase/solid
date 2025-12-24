@@ -121,12 +121,9 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         $this->setCodeChallengeMethod('S256');
         $this->addScope(['openid', 'webid', 'offline_access']);
 
-        // Log the authorization URL to verify scope is included
-        $authUrl = $this->getAuthorizationURL();
-        Log::info('[AUTHORIZATION URL]', [
-            'url' => $authUrl,
-            'has_scope' => strpos($authUrl, 'scope=') !== false,
+        Log::info('[AUTHENTICATE]', [
             'scopes' => $this->getScopes(),
+            'note' => 'Scopes will be included in authorization redirect',
         ]);
 
         return parent::authenticate();
