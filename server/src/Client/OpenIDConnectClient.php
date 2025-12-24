@@ -101,6 +101,15 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             $clientCredentials = (object) $registrationResponse->json();
             $this->setClientCredentials($clientName, $clientCredentials, $saveCredentials, $withCredentials);
         } else {
+            Log::error('[CLIENT REGISTRATION FAILED]', [
+                'status' => $registrationResponse->status(),
+                'body' => $registrationResponse->body(),
+                'request_data' => [
+                    'client_name' => $clientName,
+                    'redirect_uris' => [$redirectUri],
+                    'scope' => 'openid profile webid offline_access solid',
+                ],
+            ]);
             throw new OpenIDConnectClientException('Error registering: Please contact the OpenID Connect provider and obtain a Client ID and Secret directly from them');
         }
 
