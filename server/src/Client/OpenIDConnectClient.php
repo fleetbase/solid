@@ -121,14 +121,22 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         $this->setCodeChallengeMethod('S256');
         $this->addScope(['openid', 'webid', 'offline_access']);
 
+        // Log the authorization URL to verify scope is included
+        $authUrl = $this->getAuthorizationURL();
+        Log::info('[AUTHORIZATION URL]', [
+            'url' => $authUrl,
+            'has_scope' => strpos($authUrl, 'scope=') !== false,
+            'scopes' => $this->getScopes(),
+        ]);
+
         return parent::authenticate();
     }
 
     /**
-     * Override requestTokens to inject DPoP header AND scope parameter for token endpoint.
+     * Override requestTokens to inject DPoP header for token endpoint.
      * 
-     * The Jumbojett library does NOT include scope in the token request, but CSS requires it
-     * to properly issue tokens with scopes. This override adds scope to the token request body.
+     * Note: Per OIDC spec (and Inrupt implementation), scope is sent in the authorization
+     * request, NOT in the token request. CSS should remember the granted scope.
      */
     protected function requestTokens(string $code, array $headers = [])
     {
@@ -139,20 +147,20 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         $dpop = $this->createDPoP('POST', $tokenEndpoint, null);
         $headers[] = 'DPoP: ' . $dpop;
         
-        // Build token request parameters with scope included
+        // Build token request parameters (scope NOT included per OIDC spec - it's in authorization request)
         $tokenParams = [
             'grant_type' => 'authorization_code',
             'code' => $code,
             'redirect_uri' => $this->getRedirectURL(),
             'client_id' => $this->getClientID(),
             'client_secret' => $this->getClientSecret(),
-            'scope' => implode(' ', $this->getScopes()), // CRITICAL: Include scope in token request
         ];
         
-        Log::info('[REQUEST TOKENS WITH DPOP AND SCOPE]', [
+        Log::info('[REQUEST TOKENS WITH DPOP]', [
             'token_endpoint' => $tokenEndpoint,
-            'scope' => implode(' ', $this->getScopes()),
+            'expected_scope' => implode(' ', $this->getScopes()),
             'dpop_length' => strlen($dpop),
+            'note' => 'Scope sent in authorization request, not token request per OIDC spec',
         ]);
         
         // Handle different authentication methods
@@ -732,10 +740,8 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 $this->setState($state);
             }
 
-            // CRITICAL: Add scopes before token exchange (they're not persisted from authenticate())
-            $this->addScope(['openid', 'webid', 'offline_access']);
-
-            // requestTokens() now automatically adds DPoP header and scope
+            // Note: Scope is sent in authorization request, not token request (per OIDC spec)
+            // CSS should remember the granted scope from the authorization
             $tokenResponse = $this->requestTokens($code);
 
             Log::info('[TOKEN EXCHANGE SUCCESS]', [
