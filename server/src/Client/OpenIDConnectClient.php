@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 use Jumbojett\OpenIDConnectClient as BaseOpenIDConnectClient;
 use Jumbojett\OpenIDConnectClientException;
 
-const CLIENT_NAME     = 'Fleetbase';
+const CLIENT_NAME     = 'Fleetbase-v2';  // v2: Added webid scope support
 final class OpenIDConnectClient extends BaseOpenIDConnectClient
 {
     private ?SolidClient $solid;
