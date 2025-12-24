@@ -126,6 +126,14 @@ class DataController extends BaseController
             $webId = $profile['webid'];
             $podUrl = $this->podService->getPodUrlFromWebId($webId);
             
+            // Ensure pod has write permissions (update ACL if needed)
+            $aclService = app(\Fleetbase\Solid\Services\AclService::class);
+            if (!$aclService->ensureWritePermissions($identity, $podUrl, $webId)) {
+                return response()->json([
+                    'error' => 'Failed to grant write permissions on pod. Please check ACL configuration.',
+                ], 403);
+            }
+            
             // Build parent URL (where to create the folder)
             $parentUrl = rtrim($podUrl, '/') . '/';
             if (!empty($path)) {
