@@ -732,7 +732,10 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
                 $this->setState($state);
             }
 
-            // requestTokens() now automatically adds DPoP header
+            // CRITICAL: Add scopes before token exchange (they're not persisted from authenticate())
+            $this->addScope(['openid', 'webid', 'offline_access']);
+
+            // requestTokens() now automatically adds DPoP header and scope
             $tokenResponse = $this->requestTokens($code);
 
             Log::info('[TOKEN EXCHANGE SUCCESS]', [
