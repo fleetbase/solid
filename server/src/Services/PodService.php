@@ -778,34 +778,38 @@ class PodService
     /**
      * Create a folder (container) in the pod.
      */
-    public function createFolder(SolidIdentity $identity, string $folderUrl): bool
+    public function createFolder(SolidIdentity $identity, string $parentUrl, string $folderName): bool
     {
         try {
+            // Ensure parent URL ends with /
+            $parentUrl = rtrim($parentUrl, '/') . '/';
+            
             Log::info('[CREATE FOLDER]', [
-                'folder_url' => $folderUrl,
+                'parent_url' => $parentUrl,
+                'folder_name' => $folderName,
             ]);
 
-            // Ensure folder URL ends with /
-            $folderUrl = rtrim($folderUrl, '/') . '/';
-
-            // Create the folder using PUT request
-            $response = $identity->request('put', $folderUrl, '', [
+            // Create the folder using POST with Slug header (Solid Protocol standard)
+            $response = $identity->request('post', $parentUrl, '', [
                 'headers' => [
                     'Content-Type' => 'text/turtle',
                     'Link' => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
+                    'Slug' => $folderName,
                 ],
             ]);
 
             if ($response->successful()) {
+                $createdUrl = $response->header('Location') ?? $parentUrl . $folderName . '/';
                 Log::info('[FOLDER CREATED]', [
-                    'folder_url' => $folderUrl,
+                    'folder_url' => $createdUrl,
                     'status' => $response->status(),
                 ]);
                 return true;
             }
 
             Log::error('[FOLDER CREATE FAILED]', [
-                'folder_url' => $folderUrl,
+                'parent_url' => $parentUrl,
+                'folder_name' => $folderName,
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);

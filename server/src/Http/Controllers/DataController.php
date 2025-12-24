@@ -126,24 +126,24 @@ class DataController extends BaseController
             $webId = $profile['webid'];
             $podUrl = $this->podService->getPodUrlFromWebId($webId);
             
-            // Build folder URL, avoiding double slashes
-            $folderUrl = rtrim($podUrl, '/') . '/';
+            // Build parent URL (where to create the folder)
+            $parentUrl = rtrim($podUrl, '/') . '/';
             if (!empty($path)) {
-                $folderUrl .= trim($path, '/') . '/';
+                $parentUrl .= trim($path, '/') . '/';
             }
-            $folderUrl .= $folderName . '/';
 
             Log::info('[FOLDER CREATE]', [
                 'name' => $folderName,
                 'path' => $path,
-                'folder_url' => $folderUrl,
+                'parent_url' => $parentUrl,
             ]);
 
-            $result = $this->podService->createFolder($identity, $folderUrl);
+            // Use POST with Slug header (Solid Protocol standard)
+            $result = $this->podService->createFolder($identity, $parentUrl, $folderName);
 
             return response()->json([
                 'success'    => $result,
-                'folder_url' => $folderUrl,
+                'folder_url' => $parentUrl . $folderName . '/',
                 'message'    => "Folder '{$folderName}' created successfully",
             ]);
         } catch (\Throwable $e) {
