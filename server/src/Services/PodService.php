@@ -789,7 +789,7 @@ class PodService
             $folderUrl = rtrim($folderUrl, '/') . '/';
 
             // Create the folder using PUT request
-            $response = $identity->request('put', $folderUrl, [], [
+            $response = $identity->request('put', $folderUrl, '', [
                 'headers' => [
                     'Content-Type' => 'text/turtle',
                     'Link' => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
