@@ -143,7 +143,8 @@ class CssAccountService
     {
         try {
             // Get token endpoint from OIDC discovery
-            $discoveryResponse = Http::get("{$issuer}/.well-known/openid-configuration");
+            $issuerUrl = rtrim($issuer, '/');
+            $discoveryResponse = Http::get("{$issuerUrl}/.well-known/openid-configuration");
             
             if (!$discoveryResponse->successful()) {
                 Log::error('[CSS ACCOUNT] Failed to get OIDC configuration');
