@@ -90,7 +90,13 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         $registrationUrl = $openIdConfig->registration_endpoint;
 
         // Request registration for Client which should handle authentication
-        $registrationResponse = $this->solid->post($registrationUrl, ['client_name' => $clientName, 'redirect_uris' => [$redirectUri], ...$requestParams], $requestOptions);
+        // Include scope in registration to ensure client is allowed to request these scopes
+        $registrationResponse = $this->solid->post($registrationUrl, [
+            'client_name' => $clientName,
+            'redirect_uris' => [$redirectUri],
+            'scope' => 'openid profile webid offline_access solid',
+            ...$requestParams
+        ], $requestOptions);
         if ($registrationResponse->successful()) {
             $clientCredentials = (object) $registrationResponse->json();
             $this->setClientCredentials($clientName, $clientCredentials, $saveCredentials, $withCredentials);
