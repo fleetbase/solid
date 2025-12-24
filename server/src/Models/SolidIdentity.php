@@ -56,6 +56,28 @@ class SolidIdentity extends Model
 
     public function getAccessToken(): ?string
     {
+        // Prefer CSS client credentials token if available (has proper scopes)
+        if ($this->css_client_id && $this->css_client_secret) {
+            try {
+                $cssAccountService = app(\Fleetbase\Solid\Services\CssAccountService::class);
+                $oidcClient = app(\Fleetbase\Solid\Client\OpenIDConnectClient::class, ['options' => ['identity' => $this]]);
+                
+                $issuer = data_get($this, 'token_response.issuer') ?? config('solid.server.issuer');
+                $clientId = decrypt($this->css_client_id);
+                $clientSecret = decrypt($this->css_client_secret);
+                
+                $cssToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $oidcClient);
+                
+                if ($cssToken) {
+                    \Illuminate\Support\Facades\Log::info('[USING CSS TOKEN]', ['has_token' => true]);
+                    return $cssToken;
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('[CSS TOKEN FAILED]', ['error' => $e->getMessage()]);
+            }
+        }
+        
+        // Fallback to OIDC token
         return data_get($this, 'token_response.access_token');
     }
 

@@ -171,7 +171,7 @@ class CssAccountService
                 'DPoP' => $dpop,
             ])->asForm()->post($tokenEndpoint, [
                 'grant_type' => 'client_credentials',
-                'scope' => 'webid',
+                'scope' => 'openid webid',
             ]);
 
             if (!$tokenResponse->successful()) {
