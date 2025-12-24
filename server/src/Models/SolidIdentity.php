@@ -63,8 +63,8 @@ class SolidIdentity extends Model
                 $oidcClient = app(\Fleetbase\Solid\Client\OpenIDConnectClient::class, ['options' => ['identity' => $this]]);
                 
                 $issuer = data_get($this, 'token_response.issuer') ?? config('solid.server.issuer');
-                $clientId = decrypt($this->css_client_id);
-                $clientSecret = decrypt($this->css_client_secret);
+                $clientId = $this->css_client_id;  // Not encrypted
+                $clientSecret = decrypt($this->css_client_secret);  // Encrypted
                 
                 $cssToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $oidcClient);
                 
@@ -73,7 +73,12 @@ class SolidIdentity extends Model
                     return $cssToken;
                 }
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('[CSS TOKEN FAILED]', ['error' => $e->getMessage()]);
+                \Illuminate\Support\Facades\Log::warning('[CSS TOKEN FAILED]', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'has_client_id' => !empty($this->css_client_id),
+                    'has_client_secret' => !empty($this->css_client_secret),
+                ]);
             }
         }
         
