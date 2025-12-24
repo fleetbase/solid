@@ -56,13 +56,20 @@ class SolidIdentity extends Model
 
     public function getAccessToken(): ?string
     {
-        \Illuminate\Support\Facades\Log::debug('[GET ACCESS TOKEN]', [
+        // Prefer user's OIDC token (has proper permissions for user's pod)
+        $oidcToken = data_get($this, 'token_response.access_token');
+        
+        if ($oidcToken) {
+            \Illuminate\Support\Facades\Log::info('[USING OIDC TOKEN]', ['has_token' => true]);
+            return $oidcToken;
+        }
+        
+        \Illuminate\Support\Facades\Log::debug('[GET ACCESS TOKEN - NO OIDC]', [
             'has_css_client_id' => !empty($this->css_client_id),
             'has_css_client_secret' => !empty($this->css_client_secret),
-            'css_client_id_value' => $this->css_client_id ? 'SET' : 'NULL',
         ]);
         
-        // Prefer CSS client credentials token if available (has proper scopes)
+        // Fallback to CSS client credentials (for automation/service accounts)
         if ($this->css_client_id && $this->css_client_secret) {
             \Illuminate\Support\Facades\Log::info('[ATTEMPTING CSS TOKEN]', ['client_id' => substr($this->css_client_id, 0, 10) . '...']);
             try {
@@ -92,8 +99,9 @@ class SolidIdentity extends Model
             }
         }
         
-        // Fallback to OIDC token
-        return data_get($this, 'token_response.access_token');
+        // No token available
+        \Illuminate\Support\Facades\Log::warning('[NO ACCESS TOKEN AVAILABLE]');
+        return null;
     }
 
     public function getRedirectUri(array $query = [], int $port = 8000): string
