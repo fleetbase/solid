@@ -125,25 +125,69 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     }
 
     /**
-     * Override requestTokens to inject DPoP header for token endpoint.
+     * Override requestTokens to inject DPoP header AND scope parameter for token endpoint.
+     * 
+     * The Jumbojett library does NOT include scope in the token request, but CSS requires it
+     * to properly issue tokens with scopes. This override adds scope to the token request body.
      */
     protected function requestTokens(string $code, array $headers = [])
     {
-        // Create DPoP proof for the token endpoint
         $tokenEndpoint = $this->getProviderConfigValue('token_endpoint');
-        $dpop = $this->createDPoP('POST', $tokenEndpoint, null);
+        $tokenEndpointAuthMethodsSupported = $this->getProviderConfigValue('token_endpoint_auth_methods_supported', ['client_secret_basic']);
         
-        // Add DPoP header to the headers array
+        // Create DPoP proof for the token endpoint
+        $dpop = $this->createDPoP('POST', $tokenEndpoint, null);
         $headers[] = 'DPoP: ' . $dpop;
         
-        Log::info('[REQUEST TOKENS WITH DPOP]', [
+        // Build token request parameters with scope included
+        $tokenParams = [
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => $this->getRedirectURL(),
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret,
+            'scope' => implode(' ', $this->getScopes()), // CRITICAL: Include scope in token request
+        ];
+        
+        Log::info('[REQUEST TOKENS WITH DPOP AND SCOPE]', [
             'token_endpoint' => $tokenEndpoint,
+            'scope' => implode(' ', $this->getScopes()),
             'dpop_length' => strlen($dpop),
-            'headers_count' => count($headers),
         ]);
         
-        // Call parent with DPoP header included
-        return parent::requestTokens($code, $headers);
+        // Handle different authentication methods
+        $authorizationHeader = null;
+        if ($this->supportsAuthMethod('client_secret_basic', $tokenEndpointAuthMethodsSupported)) {
+            $authorizationHeader = 'Authorization: Basic ' . base64_encode(urlencode($this->clientID) . ':' . urlencode($this->clientSecret));
+            unset($tokenParams['client_secret'], $tokenParams['client_id']);
+        }
+        
+        // Add PKCE code verifier if using PKCE
+        $ccm = $this->getCodeChallengeMethod();
+        $cv = $this->getCodeVerifier();
+        if (!empty($ccm) && !empty($cv)) {
+            $cs = $this->getClientSecret();
+            if (empty($cs)) {
+                $authorizationHeader = null;
+                unset($tokenParams['client_secret']);
+            }
+            $tokenParams = array_merge($tokenParams, [
+                'client_id' => $this->clientID,
+                'code_verifier' => $this->getCodeVerifier()
+            ]);
+        }
+        
+        // Convert token params to string format
+        $tokenParams = http_build_query($tokenParams, '', '&', $this->encType);
+        
+        if (null !== $authorizationHeader) {
+            $headers[] = $authorizationHeader;
+        }
+        
+        // Make the token request
+        $this->tokenResponse = json_decode($this->fetchURL($tokenEndpoint, $tokenParams, $headers), false);
+        
+        return $this->tokenResponse;
     }
 
     private function setClientCredentials(string $clientName = CLIENT_NAME, $clientCredentials, bool $save = false, ?\Closure $callback = null): OpenIDConnectClient

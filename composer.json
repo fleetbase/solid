@@ -54,7 +54,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../solid-oidc-php"
+            "url": "../solid-oidc-client"
         }
     ],
     "autoload": {
