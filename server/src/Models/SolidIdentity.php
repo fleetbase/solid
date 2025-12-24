@@ -62,7 +62,10 @@ class SolidIdentity extends Model
                 $cssAccountService = app(\Fleetbase\Solid\Services\CssAccountService::class);
                 $oidcClient = app(\Fleetbase\Solid\Client\OpenIDConnectClient::class, ['options' => ['identity' => $this]]);
                 
-                $issuer = data_get($this, 'token_response.issuer') ?? config('solid.server.issuer');
+                // Get issuer from token response or use CSS server URL
+                $issuer = data_get($this, 'token_response.iss') 
+                    ?? data_get($this, 'token_response.issuer')
+                    ?? 'http://solid:3000/';  // Default CSS server
                 $clientId = $this->css_client_id;  // Not encrypted
                 $clientSecret = decrypt($this->css_client_secret);  // Encrypted
                 
