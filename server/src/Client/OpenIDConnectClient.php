@@ -24,6 +24,10 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
 
     public function __construct(array $options = [])
     {
+        // Call parent constructor to initialize the OIDC client properly
+        // Pass null for provider_url as we'll set it later in create()
+        parent::__construct(null, null, null, null);
+        
         $this->solid    = data_get($options, 'solid');
         $this->identity = data_get($options, 'identity');
         if ($this->identity instanceof SolidIdentity) {
