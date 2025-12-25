@@ -354,6 +354,72 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
 
     public function getOpenIdConfiguration(?string $key = null)
     {
+        // Use the configured OIDC issuer URL for discovery (HTTPS through nginx)
+        // instead of the direct server URL (HTTP to CSS)
+        $oidcIssuer = config('solid.oidc_issuer');
+        
+        if ($oidcIssuer) {
+            // Make direct HTTP request to OIDC issuer with SSL verification disabled for dev
+            $url = rtrim($oidcIssuer, '/') . '/.well-known/openid-configuration';
+            
+            Log::debug('[OIDC] Fetching configuration from OIDC issuer', [
+                'url' => $url,
+                'oidc_issuer' => $oidcIssuer,
+            ]);
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($error) {
+                Log::error('[OIDC] cURL error fetching configuration', [
+                    'error' => $error,
+                    'url' => $url,
+                ]);
+                return null;
+            }
+            
+            if ($httpCode !== 200) {
+                Log::error('[OIDC] HTTP error fetching configuration', [
+                    'http_code' => $httpCode,
+                    'response' => $response,
+                    'url' => $url,
+                ]);
+                return null;
+            }
+            
+            $openIdConfig = json_decode($response, false);
+            
+            if (!$openIdConfig) {
+                Log::error('[OIDC] Failed to decode configuration JSON', [
+                    'response' => $response,
+                    'url' => $url,
+                ]);
+                return null;
+            }
+            
+            Log::debug('[OIDC] Successfully fetched configuration', [
+                'has_issuer' => isset($openIdConfig->issuer),
+                'issuer' => $openIdConfig->issuer ?? 'NOT SET',
+            ]);
+            
+            if ($key) {
+                return $openIdConfig->{$key};
+            }
+            
+            $this->openIdConfig = $openIdConfig;
+            return $openIdConfig;
+        }
+        
+        // Fallback to using SolidClient (HTTP direct to CSS)
         $openIdConfigResponse = $this->solid->get('.well-known/openid-configuration');
         if ($openIdConfigResponse instanceof Response) {
             $openIdConfig = (object) $openIdConfigResponse->json();
