@@ -59,11 +59,6 @@ Route::prefix(config('solid.api.routing.prefix', 'solid'))->namespace('Fleetbase
                             // Server configuration
                             $router->get('server-config', 'SolidController@getServerConfig');
                             $router->post('server-config', 'SolidController@saveServerConfig');
-
-                            // CSS Account Management
-                            $router->get('css-credentials/check', 'CssAccountController@checkCredentials');
-                            $router->post('css-credentials/setup', 'CssAccountController@setupCredentials');
-                            $router->delete('css-credentials', 'CssAccountController@clearCredentials');
                         });
 
                         $router->group(['prefix' => 'oidc'], function ($router) {

@@ -27,7 +27,7 @@ class SolidIdentity extends Model
      *
      * @var array
      */
-    protected $fillable = ['company_uuid', 'user_uuid', 'token_response', 'identifier', 'css_email', 'css_password', 'css_client_id', 'css_client_secret', 'css_client_resource_url'];
+    protected $fillable = ['company_uuid', 'user_uuid', 'token_response', 'identifier'];
 
     /**
      * The attributes that should be cast to native types.
@@ -56,47 +56,12 @@ class SolidIdentity extends Model
 
     public function getAccessToken(): ?string
     {
-        // Prefer user's OIDC token (has proper permissions for user's pod)
+        // Use OIDC token only (proper Solid protocol)
         $oidcToken = data_get($this, 'token_response.access_token');
         
         if ($oidcToken) {
             \Illuminate\Support\Facades\Log::info('[USING OIDC TOKEN]', ['has_token' => true]);
             return $oidcToken;
-        }
-        
-        \Illuminate\Support\Facades\Log::debug('[GET ACCESS TOKEN - NO OIDC]', [
-            'has_css_client_id' => !empty($this->css_client_id),
-            'has_css_client_secret' => !empty($this->css_client_secret),
-        ]);
-        
-        // Fallback to CSS client credentials (for automation/service accounts)
-        if ($this->css_client_id && $this->css_client_secret) {
-            \Illuminate\Support\Facades\Log::info('[ATTEMPTING CSS TOKEN]', ['client_id' => substr($this->css_client_id, 0, 10) . '...']);
-            try {
-                $cssAccountService = app(\Fleetbase\Solid\Services\CssAccountService::class);
-                $oidcClient = app(\Fleetbase\Solid\Client\OpenIDConnectClient::class, ['options' => ['identity' => $this]]);
-                
-                // Get issuer from token response or use CSS server URL
-                $issuer = data_get($this, 'token_response.iss') 
-                    ?? data_get($this, 'token_response.issuer')
-                    ?? 'http://solid:3000/';  // Default CSS server
-                $clientId = $this->css_client_id;  // Not encrypted
-                $clientSecret = decrypt($this->css_client_secret);  // Encrypted
-                
-                $cssToken = $cssAccountService->getAccessToken($issuer, $clientId, $clientSecret, $oidcClient);
-                
-                if ($cssToken) {
-                    \Illuminate\Support\Facades\Log::info('[USING CSS TOKEN]', ['has_token' => true]);
-                    return $cssToken;
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::warning('[CSS TOKEN FAILED]', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'has_client_id' => !empty($this->css_client_id),
-                    'has_client_secret' => !empty($this->css_client_secret),
-                ]);
-            }
         }
         
         // No token available
