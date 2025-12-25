@@ -124,6 +124,11 @@ class SolidClient
     {
         $url = $this->createRequestUrl($uri);
 
+        // For development: disable SSL verification when using HTTPS
+        if ($this->secure) {
+            $options['verify'] = false;
+        }
+
         // Handle different data types
         if (is_string($data)) {
             return Http::withOptions($options)->withBody($data, $options['headers']['Content-Type'] ?? 'text/plain')->send($method, $url);
