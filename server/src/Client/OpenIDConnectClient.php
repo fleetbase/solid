@@ -28,6 +28,9 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         // Pass null for provider_url as we'll set it later in create()
         parent::__construct(null, null, null, null);
         
+        // Set the scope during registration
+        $this->addRegistrationParam('scope', 'openid webid offline_access');
+        
         $this->solid    = data_get($options, 'solid');
         $this->identity = data_get($options, 'identity');
         if ($this->identity instanceof SolidIdentity) {
