@@ -11,7 +11,6 @@ export default class HomeController extends Controller {
     @service modalsManager;
     @tracked authStatus = null;
 
-
     constructor() {
         super(...arguments);
         this.checkAuthenticationStatus.perform();
@@ -57,11 +56,11 @@ export default class HomeController extends Controller {
     }
 
     @task *navigateToPods() {
-        this.hostRouter.transitionTo('console.solid-protocol.data');
+        yield this.hostRouter.transitionTo('console.solid-protocol.data');
     }
 
     @task *navigateToAccount() {
-        this.hostRouter.transitionTo('console.solid-protocol.account');
+        yield this.hostRouter.transitionTo('console.solid-protocol.account');
     }
 
     get isAuthenticated() {
@@ -97,8 +96,6 @@ export default class HomeController extends Controller {
         }
         return 'http://localhost:3000';
     }
-
-
 
     get storageLocations() {
         return this.userProfile.storage_locations || [];

@@ -103,18 +103,22 @@ export default class DataIndexController extends Controller {
                 modal.startLoading();
 
                 try {
-                    const response = await this.fetch.post('data/folder', {
-                        name: folderName
-                    }, { 
-                        namespace: 'solid/int/v1' 
-                    });
+                    const response = await this.fetch.post(
+                        'data/folder',
+                        {
+                            name: folderName,
+                        },
+                        {
+                            namespace: 'solid/int/v1',
+                        }
+                    );
 
                     if (response.success) {
                         this.notifications.success(`Folder "${folderName}" created successfully!`);
                         this.hostRouter.refresh();
                         return modal.done();
                     }
-                    
+
                     this.notifications.error(response.error || 'Failed to create folder.');
                 } catch (error) {
                     this.notifications.serverError(error);
@@ -143,27 +147,31 @@ export default class DataIndexController extends Controller {
                 resourceTypes[type] = !resourceTypes[type];
             },
             confirm: async (modal) => {
-                const selected = Object.keys(resourceTypes).filter(type => resourceTypes[type]);
-                
+                const selected = Object.keys(resourceTypes).filter((type) => resourceTypes[type]);
+
                 if (selected.length === 0) {
                     return this.notifications.warning('Please select at least one resource type to import.');
                 }
 
                 try {
                     modal.setOption('importProgress', `Importing ${selected.join(', ')}...`);
-                    
-                    const response = await this.fetch.post('data/import', {
-                        resource_types: selected
-                    }, { 
-                        namespace: 'solid/int/v1' 
-                    });
+
+                    const response = await this.fetch.post(
+                        'data/import',
+                        {
+                            resource_types: selected,
+                        },
+                        {
+                            namespace: 'solid/int/v1',
+                        }
+                    );
 
                     if (response.success) {
                         this.notifications.success(`Successfully imported ${response.imported_count} resources!`);
                         this.hostRouter.refresh();
                         return modal.done();
                     }
-                    
+
                     this.notifications.error(response.error || 'Failed to import resources.');
                     modal.setOption('importProgress', null);
                 } catch (error) {
