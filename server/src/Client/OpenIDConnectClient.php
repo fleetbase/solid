@@ -29,7 +29,7 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         parent::__construct(null, null, null, null);
         
         // Set the scope during registration
-        $this->addRegistrationParam('scope', 'openid webid offline_access');
+        $this->addRegistrationParam(['scope' => 'openid webid offline_access']);
         
         $this->solid    = data_get($options, 'solid');
         $this->identity = data_get($options, 'identity');
