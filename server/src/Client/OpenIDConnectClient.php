@@ -60,6 +60,15 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     public static function create(array $options = []): OpenIDConnectClient
     {
         $client       = new static($options);
+        $solid        = data_get($options, 'solid');
+        
+        // For OIDC discovery, use the configured OIDC issuer URL
+        // This allows using HTTPS for OIDC (through nginx) while using HTTP for API calls
+        if ($solid instanceof \Fleetbase\Solid\Client\SolidClient) {
+            $oidcIssuer = config('solid.oidc_issuer', $solid->getServerUrl());
+            $client->setProviderURL($oidcIssuer);
+        }
+        
         $openIdConfig = $client->getOpenIdConfiguration();
         $client->setProviderURL($openIdConfig->issuer);
         $client->setIssuer($openIdConfig->issuer);
