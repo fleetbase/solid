@@ -1,4 +1,4 @@
-<ExplorerHeader @current={{@model.id}} @pod={{this.pod}} @onStateClicked={{this.viewContents}} @searchPlaceholder="Search Contents" @searchQuery={{this.query}} @onSearch={{perform this.search}}>
+<Layout::Section::Header @title="Data" @searchPlaceholder="Search Files and Folders" @searchQuery={{this.query}} @onSearch={{perform this.search}}>
     <Button @icon="arrow-left" @onClick={{this.back}} @helpText="Go Back" class="mr-2" />
     <Button @icon="refresh" @onClick={{this.reload}} @helpText="Refresh" class="mr-2" />
     {{#if (safe-has this.table "selectedRows")}}
@@ -12,9 +12,10 @@
             </div>
         </DropdownButton>
     {{/if}}
-    <Button @icon="plus" @iconPrefix="fas" @type="primary" @text="Create new Something" class="mr-2" @onClick={{this.createSomething}} />
-</ExplorerHeader>
+    <Button @icon="folder-plus" @iconPrefix="fas" @type="secondary" @text="New Folder" class="mr-2" @onClick={{this.createFolder}} />
+    <Button @icon="download" @iconPrefix="fas" @type="primary" @text="Import Resources" class="mr-2" @onClick={{this.importResources}} />
+</Layout::Section::Header>
 <Layout::Section::Body>
-    <Table @rows={{@model.contents}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} @tfootVerticalOffset="53" @tfootVerticalOffsetElements=".next-view-section-subheader" />
+    <Table @rows={{@model.contents}} @columns={{this.columns}} @selectable={{true}} @canSelectAll={{true}} @onSetup={{fn (mut this.table)}} />
 </Layout::Section::Body>
 {{outlet}}

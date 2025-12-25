@@ -1,6 +1,6 @@
 {
     "name": "@fleetbase/solid-engine",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "fleetbase": {
         "route": "solid-protocol"
@@ -45,13 +45,14 @@
     },
     "dependencies": {
         "@babel/core": "^7.23.2",
-        "@fleetbase/ember-core": "^0.2.12",
-        "@fleetbase/ember-ui": "^0.2.18",
-        "@fleetbase/fleetops-data": "^0.1.16",
-        "@fortawesome/ember-fontawesome": "^0.4.1",
-        "@fortawesome/fontawesome-svg-core": "^6.4.0",
-        "@fortawesome/free-solid-svg-icons": "^6.4.0",
+        "@fleetbase/ember-core": "^0.3.9",
+        "@fleetbase/ember-ui": "^0.3.15",
+        "@fleetbase/fleetops-data": "^0.1.24",
+        "@fortawesome/ember-fontawesome": "^2.0.0",
+        "@fortawesome/fontawesome-svg-core": "6.4.0",
+        "@fortawesome/free-solid-svg-icons": "6.4.0",
         "broccoli-funnel": "^3.0.8",
+        "ember-auto-import": "^2.7.4",
         "ember-cli-babel": "^8.2.0",
         "ember-cli-htmlbars": "^6.3.0",
         "ember-intl": "6.3.2",
@@ -68,7 +69,6 @@
         "@glimmer/tracking": "^1.1.2",
         "broccoli-asset-rev": "^3.0.0",
         "concurrently": "^8.2.2",
-        "ember-auto-import": "^2.6.3",
         "ember-cli": "~5.4.1",
         "ember-cli-clean-css": "^3.0.0",
         "ember-cli-dependency-checker": "^3.3.2",

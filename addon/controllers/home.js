@@ -1,10 +1,30 @@
 import Controller from '@ember/controller';
+import { tracked } from '@glimmer/tracking';
 import { inject as service } from '@ember/service';
 import { task } from 'ember-concurrency';
+import { debug } from '@ember/debug';
 
 export default class HomeController extends Controller {
     @service fetch;
     @service notifications;
+    @service hostRouter;
+    @service modalsManager;
+    @tracked authStatus = null;
+
+    constructor() {
+        super(...arguments);
+        this.checkAuthenticationStatus.perform();
+    }
+
+    @task *checkAuthenticationStatus() {
+        try {
+            const authStatus = yield this.fetch.get('authentication-status', {}, { namespace: 'solid/int/v1' });
+            this.authStatus = authStatus;
+        } catch (error) {
+            debug('Failed to check authentication status:' + error.message);
+            this.authStatus = { authenticated: false, error: error.message };
+        }
+    }
 
     @task *authenticate() {
         try {
@@ -19,5 +39,69 @@ export default class HomeController extends Controller {
 
     @task *getAccountIndex() {
         yield this.fetch.get('account', {}, { namespace: 'solid/int/v1' });
+    }
+
+    @task *logout() {
+        try {
+            yield this.fetch.post('logout', {}, { namespace: 'solid/int/v1' });
+            this.notifications.success('Logged out successfully');
+            this.authStatus = { authenticated: false };
+        } catch (error) {
+            this.notifications.serverError(error);
+        }
+    }
+
+    @task *refreshStatus() {
+        yield this.checkAuthenticationStatus.perform();
+    }
+
+    @task *navigateToPods() {
+        yield this.hostRouter.transitionTo('console.solid-protocol.data');
+    }
+
+    @task *navigateToAccount() {
+        yield this.hostRouter.transitionTo('console.solid-protocol.account');
+    }
+
+    get isAuthenticated() {
+        return this.authStatus?.authenticated === true;
+    }
+
+    get userProfile() {
+        return this.authStatus?.profile?.parsed_profile || {};
+    }
+
+    get webId() {
+        return this.authStatus?.profile?.webid;
+    }
+
+    get userName() {
+        return this.userProfile.name || 'Unknown User';
+    }
+
+    get userEmail() {
+        return this.userProfile.email || 'No email available';
+    }
+
+    get serverUrl() {
+        // Extract server URL from webId or use default
+        const webId = this.webId;
+        if (webId) {
+            try {
+                const url = new URL(webId);
+                return `${url.protocol}//${url.host}`;
+            } catch (e) {
+                // Fallback
+            }
+        }
+        return 'http://localhost:3000';
+    }
+
+    get storageLocations() {
+        return this.userProfile.storage_locations || [];
+    }
+
+    get hasStorageLocations() {
+        return this.storageLocations.length > 0;
     }
 }

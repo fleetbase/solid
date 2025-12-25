@@ -1,0 +1,29 @@
+<Modal::Default 
+    @modalIsOpened={{@modalIsOpened}} 
+    @options={{@options}} 
+    @confirm={{@options.confirm}} 
+    @decline={{@options.decline}}
+>
+    <div class="modal-body-container">
+        <div class="space-y-4">
+            <InputGroup @name="Folder Name" @wrapperClass="mb-0">
+                <Input 
+                    @type="text" 
+                    @value={{@options.folderName}}
+                    placeholder="Enter folder name (e.g., vehicles, drivers)" 
+                    class="w-full form-input"
+                />
+            </InputGroup>
+
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+                <p>This will create a new folder in your Solid pod for organizing your data.</p>
+            </div>
+
+            {{#if @options.error}}
+                <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded p-3">
+                    <p class="text-sm text-red-800 dark:text-red-200">{{@options.error}}</p>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+</Modal::Default>

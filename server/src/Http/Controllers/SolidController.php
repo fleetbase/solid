@@ -7,16 +7,24 @@ use Fleetbase\Http\Requests\AdminRequest;
 use Fleetbase\Models\Setting;
 use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Models\SolidIdentity;
+use Fleetbase\Solid\Services\PodService;
 use Fleetbase\Solid\Support\Utils;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class SolidController extends BaseController
 {
+    protected PodService $podService;
+
+    public function __construct(PodService $podService)
+    {
+        $this->podService = $podService;
+    }
+
     /**
      * Welcome message only.
      */
-    public function hello()
+    public function hello(Request $request)
     {
         return response()->json(
             [
@@ -30,7 +38,7 @@ class SolidController extends BaseController
     {
         $defaultConfig = config('solid.server');
         $savedConfig   = Setting::system('solid.server');
-        $config        = array_merge($defaultConfig, $savedConfig);
+        $config        = array_merge($defaultConfig, $savedConfig ?? []);
 
         return response()->json($config);
     }
@@ -55,10 +63,196 @@ class SolidController extends BaseController
 
     public function authenticate(string $identifier)
     {
-        $identity = SolidIdentity::initialize();
-        $oidc     = SolidClient::create(['identity' => $identity])->oidc->register(['saveCredentials' => true]);
+        try {
+            Log::info('[SOLID AUTH START]', ['identifier' => $identifier]);
 
-        return $oidc->authenticate();
+            $identity = SolidIdentity::where('identifier', $identifier)->first();
+
+            if (!$identity) {
+                throw new \Exception('Identity not found for identifier: ' . $identifier);
+            }
+
+            Log::info('[SOLID IDENTITY FOUND]', [
+                'identity_id'  => $identity->id,
+                'redirect_uri' => $identity->getRedirectUri(),
+            ]);
+
+            $oidc = SolidClient::create(['identity' => $identity])->oidc->register(['saveCredentials' => true]);
+
+            Log::info('[SOLID OIDC REGISTERED]', ['client_id' => $oidc->getClientID()]);
+
+            // This will redirect to the authorization server
+            return $oidc->authenticate();
+        } catch (\Throwable $e) {
+            Log::error('[SOLID AUTH ERROR]', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Redirect back to frontend with error
+            return redirect(Utils::consoleUrl('solid-protocol', ['error' => $e->getMessage()]));
+        }
+    }
+
+    /**
+     * Get authentication status and account details.
+     */
+    public function getAuthenticationStatus(Request $request)
+    {
+        try {
+            $identity = SolidIdentity::current();
+
+            if (!$identity || !$identity->getAccessToken()) {
+                return response()->json([
+                    'authenticated' => false,
+                    'identity'      => null,
+                    'profile'       => null,
+                ]);
+            }
+
+            // Get WebID and profile information
+            $profile = $this->podService->getProfileData($identity);
+
+            return response()->json([
+                'authenticated' => true,
+                'identity'      => [
+                    'id'               => $identity->id,
+                    'identifier'       => $identity->identifier,
+                    'created_at'       => $identity->created_at,
+                    'has_access_token' => (bool) $identity->getAccessToken(),
+                ],
+                'profile' => $profile,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[SOLID AUTH STATUS ERROR]', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'authenticated' => false,
+                'identity'      => null,
+                'profile'       => null,
+                'error'         => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Logout user by clearing identity tokens.
+     */
+    public function logout(Request $request)
+    {
+        try {
+            $identity = SolidIdentity::current();
+
+            if ($identity) {
+                // Clear token response
+                $identity->update(['token_response' => null]);
+
+                // Clear any cached client credentials
+                $solid = SolidClient::create(['identity' => $identity]);
+                $solid->oidc->clearClientCredentials();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[SOLID LOGOUT ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get real pods from Solid server.
+     */
+    public function getPods(Request $request)
+    {
+        try {
+            $identity = SolidIdentity::current();
+
+            if (!$identity || !$identity->getAccessToken()) {
+                return response()->json([
+                    'error' => 'Not authenticated',
+                ], 401);
+            }
+
+            $profile          = $this->podService->getProfileData($identity);
+            $storageLocations = data_get($profile, 'parsed_profile.storage_locations', []);
+
+            $pods = [];
+            foreach ($storageLocations as $storageUrl) {
+                try {
+                    $podResponse = $identity->request('get', $storageUrl);
+                    if ($podResponse->successful()) {
+                        $pods[] = [
+                            'url'        => $storageUrl,
+                            'name'       => $this->extractPodName($storageUrl),
+                            'content'    => $podResponse->body(),
+                            'status'     => $podResponse->status(),
+                            'containers' => $this->parseContainers($podResponse->body()),
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[SOLID POD FETCH ERROR]', [
+                        'storage_url' => $storageUrl,
+                        'error'       => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'pods'              => $pods,
+                'storage_locations' => $storageLocations,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[SOLID PODS ERROR]', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Extract pod name from URL.
+     */
+    private function extractPodName(string $url): string
+    {
+        $parts = explode('/', rtrim($url, '/'));
+
+        return end($parts) ?: 'Root Pod';
+    }
+
+    /**
+     * Parse containers from pod content.
+     */
+    private function parseContainers(string $content): array
+    {
+        $containers = [];
+
+        // Parse LDP containers from RDF
+        if (preg_match_all('/<([^>]+)>\s+a\s+ldp:Container/', $content, $matches)) {
+            foreach ($matches[1] as $containerUrl) {
+                $containers[] = [
+                    'url'  => $containerUrl,
+                    'name' => $this->extractPodName($containerUrl),
+                    'type' => 'container',
+                ];
+            }
+        }
+
+        return $containers;
     }
 
     public function getAccountIndex()
@@ -66,105 +260,5 @@ class SolidController extends BaseController
         $solidIdentity   = SolidIdentity::current();
         $accountResponse = $solidIdentity->request('get', '.account');
         dd($accountResponse->json());
-    }
-
-    public function play(Request $request)
-    {
-        $action      = $request->input('action');
-        $identity    = SolidIdentity::first();
-        $solid       = new SolidClient(['identity' => $identity]);
-
-        if ($action === 'register_client') {
-            $registeredClient = $solid->oidc->register();
-        }
-
-        if ($action === 'restore') {
-            $solid->identity->restoreClientCredentials();
-        }
-
-        if ($action === 'login') {
-            $loginResponse = $solid->post(
-                '.account/login/password',
-                [
-                    'email'    => 'ron@fleetbase.io',
-                    'password' => 'Zerina30662!',
-                    'remember' => true,
-                ],
-                [
-                    'withoutAuth' => true,
-                    'headers'     => [
-                        'Cookie' => '_interaction=TDQMh2DWuC8wZvkEB2n_G; _interaction.sig=3HHA_FUVo7Cw9up2keCJ7IaQJws; _session.legacy=jdxTxnTGmvWx2ECaiwYeP; _session.legacy.sig=EUGYX6DAKtBNQqZN5PGcbIJ-5ac',
-                    ],
-                ]
-            );
-            dump($loginResponse->json());
-        }
-
-        if ($action === 'test') {
-            // $solidClient->identity->restoreTokens();
-            dump('AccessToken: ' . $solid->identity->getAccessToken());
-            dump('IdToken: ' . $solid->identity->getIdToken());
-
-            $indexResponse = $solid->get('.account', [], ['withoutAuth' => true]);
-            dump($indexResponse->json());
-
-            // $createPodResponse = $solidClient->post('rondon/blog');
-            // dump($createPodResponse->json());
-
-            // $createFileResponse = $solidClient->put('test.txt', ['test'], ['content-type' => 'text/plain']);
-            // dump($createFileResponse->json());
-        }
-    }
-
-    public function getPods(Request $request)
-    {
-        // Retrieve search and sort parameters from the request
-        $query = $request->searchQuery();
-        $sort  = $request->input('sort', '-created_at');
-        $id    = $request->input('id');
-        $slug  = $request->input('slug');
-
-        // Collection of pods data
-        $pods = json_decode(file_get_contents(base_path('vendor/fleetbase/solid-api/server/data/pods.json')));
-
-        // Get single content from pod via slug
-        if ($slug) {
-            $result = Utils::searchPods($pods, 'slug', $slug);
-
-            return response()->json($result);
-        }
-
-        // Get a single item via ID
-        if ($id && is_array($pods)) {
-            $result = Utils::searchPods($pods, 'id', $id);
-            if ($result && $query) {
-                $result->contents = array_values(
-                    array_filter(
-                        data_get($result, 'contents', []),
-                        function ($content) use ($query) {
-                            return Str::contains(strtolower(data_get($content, 'name')), strtolower($query));
-                        }
-                    )
-                );
-            }
-
-            return response()->json($result);
-        }
-
-        // Filtering by search query
-        if ($query) {
-            $pods = array_filter($pods, function ($pod) use ($query) {
-                return Str::contains(strtolower(data_get($pod, 'name')), strtolower($query));
-            });
-        }
-
-        // Determine sorting direction and key
-        $sortDesc = substr($sort, 0, 1) === '-';
-        $sortKey  = ltrim($sort, '-');
-
-        // Sorting by specified field
-        $pods = collect($pods)->sortBy($sortKey, SORT_REGULAR, $sortDesc);
-
-        return response()->json($pods->values());
     }
 }

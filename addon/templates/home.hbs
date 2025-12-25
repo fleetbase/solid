@@ -1,11 +1,169 @@
-<Layout::Section::Header @title="Solid for Fleetbase" />
-<Layout::Section::Body class="solid-fleetbase-home-container">
-    <h1>Welcome to Solid for Fleetbase</h1>
-    <h2>Getting Started</h2>
-    <div class="mt-2">
-        <p>
-            <a href="#" {{on "click" (perform this.authenticate)}}>Sign up for an account</a> to get started with your own Pod and WebID. Once you are logged in you can begin to manage your pods and sync data directly from Fleetbase to your Pods.
-        </p>
-    </div>
-    {{!-- <Button @text="Click to Test" @icon="magic" @onClick={{perform this.getAccountIndex}} @wrapperClass="mt-4" /> --}}
+<Layout::Section::Header @title="Solid for Fleetbase">
+    {{#if this.isAuthenticated}}
+        <Button @icon="refresh" @onClick={{perform this.refreshStatus}} @helpText="Refresh Status" @isLoading={{this.refreshStatus.isRunning}} class="mr-2" />
+        <Button @icon="sign-out-alt" @onClick={{perform this.logout}} @helpText="Logout" @type="danger" @isLoading={{this.logout.isRunning}} @disabled={{or this.refreshStatus.isRunning this.checkAuthenticationStatus.isRunning}} />
+    {{/if}}
+</Layout::Section::Header>
+
+<Layout::Section::Body class="solid-fleetbase-home-container overflow-y-scroll h-full">
+    {{#if this.checkAuthenticationStatus.isRunning}}
+        <div class="flex items-center justify-center h-64">
+            <div class="text-center">
+                <Spinner class="mb-4" />
+                <p class="text-gray-600 dark:text-gray-400">Checking authentication status...</p>
+            </div>
+        </div>
+    {{else}}
+        {{#if this.isAuthenticated}}
+            <div class="max-w-4xl mx-auto space-y-4">
+                <div class="pb-4">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back!</h1>
+                    <p class="text-gray-600 dark:text-gray-400">You are successfully connected to your Solid storage.</p>
+                </div>
+
+                <ContentPanel @title="Your Solid Identity" @open={{true}} @wrapperClass="bordered-classic">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile Information</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                    <p class="text-gray-900 dark:text-white">{{this.userName}}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                                    <p class="text-gray-900 dark:text-white">{{this.userEmail}}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">WebID</label>
+                                    <p class="text-sm text-blue-600 dark:text-blue-400 break-all">{{this.webId}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Storage Information</h3>
+                            {{#if this.hasStorageLocations}}
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Storage Locations</label>
+                                    {{#each this.storageLocations as |location|}}
+                                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded text-sm">
+                                            <p class="text-blue-600 dark:text-blue-400 break-all">{{location}}</p>
+                                        </div>
+                                    {{/each}}
+                                </div>
+                            {{else}}
+                                <p class="text-gray-600 dark:text-gray-400">No storage locations found</p>
+                            {{/if}}
+                        </div>
+                    </div>
+                </ContentPanel>
+
+                <ContentPanel @title="Quick Actions" @open={{true}} @wrapperClass="bordered-classic">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <FaIcon @icon="folder-tree" @size="2x" class="text-blue-600 dark:text-blue-400 mb-3" />
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Browse Data</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Explore and manage your Fleetops data in Solid</p>
+                            <div class="flex items-center justify-center">
+                                <Button @text="Browse Data" @icon="database" @type="primary" class="w-full" @onClick={{perform this.navigateToPods}} />
+                            </div>
+                        </div>
+                        <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <FaIcon @icon="user" @size="2x" class="text-green-600 dark:text-green-400 mb-3" />
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Account Settings</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Manage your account and profile settings</p>
+                            <div class="flex items-center justify-center">
+                                <Button @text="Account" @icon="user" @type="secondary" class="w-full" @onClick={{perform this.navigateToAccount}} />
+                            </div>
+                        </div>
+                        <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <FaIcon @icon="sync" @size="2x" class="text-purple-600 dark:text-purple-400 mb-3" />
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sync Data</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Sync your Fleetbase data to Solid storage</p>
+                            <div class="flex items-center justify-center">
+                                <Button @text="Coming Soon" @icon="sync" @disabled={{true}} />
+                            </div>
+                        </div>
+                    </div>
+                </ContentPanel>
+
+                <ContentPanel @title="Connection Status" @open={{true}} @wrapperClass="bordered-classic">
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <span class="text-gray-900 dark:text-white">Connected to Solid server</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <span class="text-gray-900 dark:text-white">Authentication active</span>
+                        </div>
+                        {{#if this.hasStorageLocations}}
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-gray-900 dark:text-white">{{this.storageLocations.length}} storage location(s) available</span>
+                            </div>
+                        {{/if}}
+                    </div>
+                </ContentPanel>
+            </div>
+        {{else}}
+            <div class="max-w-2xl mx-auto text-center">
+                <div class="mb-8">
+                    <FaIcon @icon="shield-alt" @size="4x" class="text-gray-400 dark:text-gray-600 mb-4" />
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Welcome to Solid for Fleetbase</h1>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">
+                        Connect your Fleetbase account with Solid to manage your data in a decentralized way.
+                    </p>
+                </div>
+
+                <ContentPanel @title="Getting Started" @open={{true}} @wrapperClass="bordered-classic">
+                    <div class="text-left space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-blue-600 dark:text-blue-400 font-semibold">1</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sign up for a Solid account</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Create your Solid account and WebID to get started with decentralized data storage.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-blue-600 dark:text-blue-400 font-semibold">2</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Connect your account</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Authenticate with your Solid provider to enable data synchronization.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-4">
+                                <span class="text-blue-600 dark:text-blue-400 font-semibold">3</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sync your data</h3>
+                                <p class="text-gray-600 dark:text-gray-400">Sync vehicles, drivers, and orders from Fleetbase to your Solid storage.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <Button @text="Connect to Solid" @icon="link" @type="primary" @size="lg" @onClick={{perform this.authenticate}} @isLoading={{this.authenticate.isRunning}} />
+                    </div>
+                </ContentPanel>
+
+                {{#if this.authStatus.error}}
+                    <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mt-4">
+                        <div class="flex">
+                            <FaIcon @icon="exclamation-triangle" class="text-red-400 mr-3 mt-1" />
+                            <div>
+                                <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Authentication Error</h3>
+                                <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{this.authStatus.error}}</p>
+                            </div>
+                        </div>
+                    </div>
+                {{/if}}
+            </div>
+        {{/if}}
+    {{/if}}
+    <Spacer @height="200px" />
 </Layout::Section::Body>

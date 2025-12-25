@@ -56,7 +56,17 @@ class SolidIdentity extends Model
 
     public function getAccessToken(): ?string
     {
-        return data_get($this, 'token_response.access_token');
+        // Use OIDC token only (proper Solid protocol)
+        $oidcToken = data_get($this, 'token_response.access_token');
+        
+        if ($oidcToken) {
+            \Illuminate\Support\Facades\Log::info('[USING OIDC TOKEN]', ['has_token' => true]);
+            return $oidcToken;
+        }
+        
+        // No token available
+        \Illuminate\Support\Facades\Log::warning('[NO ACCESS TOKEN AVAILABLE]');
+        return null;
     }
 
     public function getRedirectUri(array $query = [], int $port = 8000): string
@@ -122,9 +132,9 @@ class SolidIdentity extends Model
         return $solidIdentity;
     }
 
-    public function request(string $method, string $uri, array $data = [], array $options = [])
+    public function request(string $method, string $uri, string|array $data = [], array $options = [])
     {
-        $solidClient = new SolidClient();
+        $solidClient = new SolidClient(['identity' => $this]);
 
         return $solidClient->requestWithIdentity($this, $method, $uri, $data, $options);
     }
