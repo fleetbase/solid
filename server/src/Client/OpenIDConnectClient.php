@@ -101,6 +101,17 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         return $client;
     }
 
+    protected function fetchURL(string $url, string $post_body = null, array $headers = [])
+    {
+        Log::debug('[OIDC] fetchURL called', [
+            'url' => $url,
+            'has_post_body' => $post_body !== null,
+            'provider_url' => $this->getProviderURL(),
+        ]);
+        
+        return parent::fetchURL($url, $post_body, $headers);
+    }
+
     public function register(array $options = []): OpenIDConnectClient
     {
         // Get registration options
