@@ -93,12 +93,14 @@ export default class DataIndexController extends Controller {
             acceptButtonText: 'Create',
             acceptButtonIcon: 'folder-plus',
             folderName: '',
+            keepOpen: true,
             confirm: async (modal) => {
                 const folderName = modal.getOption('folderName');
-                
                 if (!folderName) {
                     return this.notifications.warning('Please enter a folder name.');
                 }
+
+                modal.startLoading();
 
                 try {
                     const response = await this.fetch.post('data/folder', {
@@ -116,6 +118,8 @@ export default class DataIndexController extends Controller {
                     this.notifications.error(response.error || 'Failed to create folder.');
                 } catch (error) {
                     this.notifications.serverError(error);
+                } finally {
+                    modal.stopLoading();
                 }
             },
         });

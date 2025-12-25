@@ -21,11 +21,6 @@ export default class HomeController extends Controller {
         try {
             const authStatus = yield this.fetch.get('authentication-status', {}, { namespace: 'solid/int/v1' });
             this.authStatus = authStatus;
-
-            // If authenticated, check CSS credentials
-            if (authStatus.authenticated) {
-                yield this.checkCssCredentials.perform();
-            }
         } catch (error) {
             debug('Failed to check authentication status:' + error.message);
             this.authStatus = { authenticated: false, error: error.message };
