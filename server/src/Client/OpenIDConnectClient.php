@@ -109,7 +109,40 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             'provider_url' => $this->getProviderURL(),
         ]);
         
-        return parent::fetchURL($url, $post_body, $headers);
+        // For development: disable SSL verification when connecting to local Solid server
+        // This allows HTTPS connections to work with self-signed certificates
+        $ch = curl_init();
+        
+        if ($post_body !== null) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_body);
+            $content_type = is_object(json_decode($post_body, false)) ? 'application/json' : 'application/x-www-form-urlencoded';
+            $headers[] = "Content-Type: $content_type";
+        }
+        
+        if (count($headers) > 0) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
+        
+        // Disable SSL verification for development (self-signed certificates)
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, $this->getUserAgent());
+        
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        if ($error) {
+            Log::error('[OIDC] cURL error', ['error' => $error, 'url' => $url]);
+            throw new \Exception("cURL error: $error");
+        }
+        
+        return $response;
     }
 
     public function register(array $options = []): OpenIDConnectClient
