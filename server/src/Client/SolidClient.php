@@ -125,7 +125,7 @@ class SolidClient
         $url = $this->createRequestUrl($uri);
 
         // For development: disable SSL verification when using HTTPS
-        if ($this->secure) {
+        if ($this->secure && app()->environment('local', 'development')) {
             $options['verify'] = false;
         }
 

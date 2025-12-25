@@ -124,9 +124,11 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
         
-        // Disable SSL verification for development (self-signed certificates)
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        // Disable SSL verification in development only (self-signed certificates)
+        if (app()->environment('local', 'development')) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
         
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -370,8 +372,13 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            
+            // Disable SSL verification in development only
+            if (app()->environment('local', 'development')) {
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            }
+            
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             
             $response = curl_exec($ch);
