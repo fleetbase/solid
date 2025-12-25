@@ -174,6 +174,11 @@ class SolidClient
             $options['headers']['DPoP']          = $this->oidc->createDPoP($method, $url, $accessToken);
         }
 
+        // For development: disable SSL verification when using HTTPS
+        if ($this->secure && app()->environment('local', 'development')) {
+            $options['verify'] = false;
+        }
+
         Log::info('[SOLID REQUEST HEADERS]', ['headers' => $options['headers']]);
 
         // Handle different data types
