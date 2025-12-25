@@ -74,6 +74,10 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             ]);
         }
         
+        Log::debug('[OIDC] About to fetch configuration', [
+            'provider_url_before_fetch' => $client->getProviderURL(),
+        ]);
+        
         $openIdConfig = $client->getOpenIdConfiguration();
         
         Log::debug('[OIDC] Received configuration', [
