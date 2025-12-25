@@ -67,9 +67,25 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
         if ($solid instanceof \Fleetbase\Solid\Client\SolidClient) {
             $oidcIssuer = config('solid.oidc_issuer', $solid->getServerUrl());
             $client->setProviderURL($oidcIssuer);
+            Log::debug('[OIDC] Using provider URL for discovery', [
+                'provider_url' => $oidcIssuer,
+                'config_value' => config('solid.oidc_issuer'),
+                'fallback' => $solid->getServerUrl(),
+            ]);
         }
         
         $openIdConfig = $client->getOpenIdConfiguration();
+        
+        Log::debug('[OIDC] Received configuration', [
+            'config' => $openIdConfig,
+            'has_issuer' => isset($openIdConfig->issuer),
+            'issuer' => $openIdConfig->issuer ?? 'NOT SET',
+        ]);
+        
+        if (!isset($openIdConfig->issuer)) {
+            throw new \Exception('OIDC configuration does not contain issuer property. Response: ' . json_encode($openIdConfig));
+        }
+        
         $client->setProviderURL($openIdConfig->issuer);
         $client->setIssuer($openIdConfig->issuer);
         $client->providerConfigParam((array) $openIdConfig);
