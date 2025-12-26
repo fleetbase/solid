@@ -138,6 +138,15 @@ class DataController extends BaseController
                 'parent_url' => $parentUrl,
             ]);
 
+            // Ensure pod root has write permissions before creating folder
+            $aclService = app(\Fleetbase\Solid\Services\AclService::class);
+            if (!$aclService->ensureWritePermissions($identity, $podUrl, $webId)) {
+                Log::warning('[FOLDER CREATE] Pod root lacks write permissions', [
+                    'pod_url' => $podUrl,
+                    'webid' => $webId,
+                ]);
+            }
+
             // Use POST with Slug header (Solid Protocol standard)
             $result = $this->podService->createFolder($identity, $parentUrl, $folderName);
 
@@ -236,6 +245,15 @@ class DataController extends BaseController
                 'webid'          => $webId,
                 'resource_types' => $resourceTypes,
             ]);
+
+            // Ensure pod root has write permissions before importing
+            $aclService = app(\Fleetbase\Solid\Services\AclService::class);
+            if (!$aclService->ensureWritePermissions($identity, $podUrl, $webId)) {
+                Log::warning('[IMPORT RESOURCES] Pod root lacks write permissions', [
+                    'pod_url' => $podUrl,
+                    'webid' => $webId,
+                ]);
+            }
 
             $result = $this->resourceSyncService->importResources($identity, $podUrl, $resourceTypes);
 
