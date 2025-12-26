@@ -804,6 +804,15 @@ class PodService
                     'folder_url' => $createdUrl,
                     'status' => $response->status(),
                 ]);
+
+                // Ensure the folder has proper ACL permissions
+                $aclService = app(AclService::class);
+                $webId = $identity->webid;
+                
+                if ($webId) {
+                    $aclService->ensureFolderPermissions($identity, $createdUrl, $webId);
+                }
+
                 return true;
             }
 
