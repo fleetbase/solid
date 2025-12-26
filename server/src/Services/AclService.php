@@ -289,3 +289,118 @@ TURTLE;
 TURTLE;
     }
 }
+
+    /**
+     * Check if a specific URL is writable (has write or append permissions).
+     *
+     * @param SolidIdentity $identity
+     * @param string $url
+     * @return bool
+     */
+    public function isWritable(SolidIdentity $identity, string $url): bool
+    {
+        try {
+            $response = $identity->request('head', $url);
+            
+            if (!$response->successful()) {
+                return false;
+            }
+
+            $wacAllow = $response->header('WAC-Allow');
+            
+            if ($wacAllow && preg_match('/user="([^"]*)"/i', $wacAllow, $matches)) {
+                $modes = strtolower($matches[1]);
+                $isWritable = str_contains($modes, 'write') || str_contains($modes, 'append');
+                
+                Log::debug('[ACL] Writable check', [
+                    'url' => $url,
+                    'wac_allow' => $wacAllow,
+                    'is_writable' => $isWritable,
+                ]);
+                
+                return $isWritable;
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::debug('[ACL] Writable check failed', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Find writable storage locations from user profile.
+     *
+     * @param SolidIdentity $identity
+     * @param array $profile
+     * @return array
+     */
+    public function findWritableLocations(SolidIdentity $identity, array $profile): array
+    {
+        $writableLocations = [];
+        $webId = $profile['webid'] ?? null;
+        
+        if (!$webId) {
+            return $writableLocations;
+        }
+
+        // Get pod URL from WebID
+        $podUrl = $this->podService->getPodUrlFromWebId($webId);
+        
+        // Check common storage locations
+        $commonLocations = [
+            'public' => rtrim($podUrl, '/') . '/public/',
+            'private' => rtrim($podUrl, '/') . '/private/',
+            'inbox' => rtrim($podUrl, '/') . '/inbox/',
+        ];
+
+        foreach ($commonLocations as $name => $url) {
+            if ($this->isWritable($identity, $url)) {
+                $writableLocations[$name] = $url;
+            }
+        }
+
+        // Check storage locations from profile
+        foreach ($profile['storage_locations'] ?? [] as $storage) {
+            $storageUrl = $this->resolveStorageUrl($storage, $webId, $podUrl);
+            if ($storageUrl && $this->isWritable($identity, $storageUrl)) {
+                $writableLocations['storage_' . count($writableLocations)] = $storageUrl;
+            }
+        }
+
+        Log::info('[ACL] Found writable locations', [
+            'count' => count($writableLocations),
+            'locations' => $writableLocations,
+        ]);
+
+        return $writableLocations;
+    }
+
+    /**
+     * Resolve a storage URL from profile data.
+     *
+     * @param string $storage
+     * @param string $webId
+     * @param string $podUrl
+     * @return string|null
+     */
+    protected function resolveStorageUrl(string $storage, string $webId, string $podUrl): ?string
+    {
+        // Handle relative URLs
+        if ($storage === '../' || $storage === './') {
+            return $podUrl;
+        }
+
+        // Handle absolute URLs
+        if (str_starts_with($storage, 'http://') || str_starts_with($storage, 'https://')) {
+            return $storage;
+        }
+
+        // Handle relative paths
+        $webIdBase = dirname($webId);
+        return rtrim($webIdBase, '/') . '/' . ltrim($storage, '/');
+    }
+}
