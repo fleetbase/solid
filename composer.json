@@ -1,6 +1,6 @@
 {
     "name": "fleetbase/solid-api",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "keywords": [
         "fleetbase-extension",
