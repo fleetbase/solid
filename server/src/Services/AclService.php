@@ -288,7 +288,6 @@ TURTLE;
     acl:mode acl:Read, acl:Write, acl:Control.
 TURTLE;
     }
-}
 
     /**
      * Check if a specific URL is writable (has write or append permissions).
