@@ -4,5 +4,7 @@
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "repository": "https://github.com/fleetbase/solid",
     "license": "AGPL-3.0-or-later",
-    "author": "Fleetbase Pte Ltd <hello@fleetbase.io>"
+    "author": "Fleetbase Pte Ltd <hello@fleetbase.io>",
+    "engine": "package.json",
+    "api": "composer.json"
 }
