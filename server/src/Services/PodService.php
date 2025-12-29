@@ -454,6 +454,8 @@ class PodService
                 $podUrl = $pod['url'];
             }
 
+            dd($podIdOrUrl, $podUrl);
+
             $response = $identity->request('get', $podUrl);
 
             if (!$response->successful()) {
