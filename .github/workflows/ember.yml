@@ -94,3 +94,67 @@ jobs:
 
       - name: Publish to GitHub registry
         run: npm publish
+
+  fleetbase_publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js 18.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: latest
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Install Fleetbase CLI
+        run: npm i -g @fleetbase/cli npm-cli-login
+
+      - name: Login to Fleetbase Registry
+        run: npm-cli-login -u ${{SECRETS.FLEETBASE_REGISTRY_USERNAME}} -p ${{SECRETS.FLEETBASE_REGISTRY_PASSWORD}} -e ${{SECRETS.FLEETBASE_REGISTRY_EMAIL}} -r https://registry.fleetbase.io
+
+      - name: Publish to Fleetbase registry
+        run: flb publish
+
+  fleetbase_publish_qa:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js 18.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: latest
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Install Fleetbase CLI
+        run: npm i -g @fleetbase/cli npm-cli-login
+
+      - name: Login to Fleetbase Registry
+        run: npm-cli-login -u ${{SECRETS.FLEETBASE_QA_REGISTRY_USERNAME}} -p ${{SECRETS.FLEETBASE_QA_REGISTRY_PASSWORD}} -e ${{SECRETS.FLEETBASE_QA_REGISTRY_EMAIL}} -r https://registry.qa.fleetbase.io
+
+      - name: Publish to Fleetbase registry
+        run: flb publish --registry https://registry.qa.fleetbase.io

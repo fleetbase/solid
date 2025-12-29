@@ -299,6 +299,14 @@ class ResourceSyncService
                 'url' => $containerUrl,
                 'status' => $response->status(),
             ]);
+
+            // Ensure the container has proper ACL permissions
+            $aclService = app(AclService::class);
+            $webId = $identity->webid;
+            
+            if ($webId) {
+                $aclService->ensureFolderPermissions($identity, $containerUrl, $webId);
+            }
         } catch (\Throwable $e) {
             // Container might already exist, that's okay
             Log::debug('[CONTAINER CREATION SKIPPED]', [

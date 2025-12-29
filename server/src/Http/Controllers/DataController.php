@@ -138,6 +138,35 @@ class DataController extends BaseController
                 'parent_url' => $parentUrl,
             ]);
 
+            // Check if parent URL is writable before attempting folder creation
+            $aclService = app(\Fleetbase\Solid\Services\AclService::class);
+            
+            if (!$aclService->isWritable($identity, $parentUrl)) {
+                Log::warning('[FOLDER CREATE] Location not writable', [
+                    'parent_url' => $parentUrl,
+                    'webid' => $webId,
+                ]);
+
+                // Find writable locations
+                $writableLocations = $aclService->findWritableLocations($identity, $profile);
+                
+                if (!empty($writableLocations)) {
+                    $suggestion = array_values($writableLocations)[0];
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Cannot create folder at specified location. You do not have write permissions.',
+                        'suggestion' => "Try creating the folder at: {$suggestion}",
+                        'writable_locations' => $writableLocations,
+                    ], 403);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'No writable locations found in your pod.',
+                        'help' => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
+                    ], 403);
+                }
+            }
+
             // Use POST with Slug header (Solid Protocol standard)
             $result = $this->podService->createFolder($identity, $parentUrl, $folderName);
 
@@ -236,6 +265,34 @@ class DataController extends BaseController
                 'webid'          => $webId,
                 'resource_types' => $resourceTypes,
             ]);
+
+            // Check if pod URL is writable before importing
+            $aclService = app(\Fleetbase\Solid\Services\AclService::class);
+            
+            if (!$aclService->isWritable($identity, $podUrl)) {
+                Log::warning('[IMPORT RESOURCES] Pod root not writable', [
+                    'pod_url' => $podUrl,
+                    'webid' => $webId,
+                ]);
+
+                // Find writable locations
+                $writableLocations = $aclService->findWritableLocations($identity, $profile);
+                
+                if (!empty($writableLocations)) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Cannot import resources to pod root. You do not have write permissions.',
+                        'writable_locations' => $writableLocations,
+                        'help' => 'Resources can only be imported to writable locations.',
+                    ], 403);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'No writable locations found in your pod.',
+                        'help' => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
+                    ], 403);
+                }
+            }
 
             $result = $this->resourceSyncService->importResources($identity, $podUrl, $resourceTypes);
 

@@ -712,18 +712,56 @@ class PodService
     {
         $items = [];
 
-        // Parse contained resources
+        // Parse contained resources with ldp:contains
         if (preg_match_all('/ldp:contains\s+<([^>]+)>/', $content, $matches)) {
             foreach ($matches[1] as $resourceUrl) {
-                $items[] = [
+                $item = [
                     'url'  => $resourceUrl,
                     'name' => $this->extractPodName($resourceUrl),
                     'type' => substr($resourceUrl, -1) === '/' ? 'container' : 'resource',
                 ];
+                
+                // Try to extract additional metadata for this resource
+                $item = array_merge($item, $this->extractResourceMetadata($content, $resourceUrl));
+                
+                $items[] = $item;
             }
         }
 
         return $items;
+    }
+
+    /**
+     * Extract metadata for a specific resource from Turtle content.
+     */
+    private function extractResourceMetadata(string $content, string $resourceUrl): array
+    {
+        $metadata = [];
+        
+        // Escape special regex characters in URL
+        $escapedUrl = preg_quote($resourceUrl, '/');
+        
+        // Extract resource type (e.g., ldp:BasicContainer, foaf:Document)
+        if (preg_match('/<' . $escapedUrl . '>\s+a\s+([^;\s]+)/', $content, $matches)) {
+            $metadata['rdf_type'] = trim($matches[1]);
+        }
+        
+        // Extract dc:title
+        if (preg_match('/<' . $escapedUrl . '>.*?dc:title\s+"([^"]+)"/', $content, $matches)) {
+            $metadata['title'] = $matches[1];
+        }
+        
+        // Extract dc:modified or posix:mtime
+        if (preg_match('/<' . $escapedUrl . '>.*?(?:dc:modified|posix:mtime)\s+(\d+)/', $content, $matches)) {
+            $metadata['modified'] = (int)$matches[1];
+        }
+        
+        // Extract posix:size
+        if (preg_match('/<' . $escapedUrl . '>.*?posix:size\s+(\d+)/', $content, $matches)) {
+            $metadata['size'] = (int)$matches[1];
+        }
+        
+        return $metadata;
     }
 
     /**
@@ -804,6 +842,15 @@ class PodService
                     'folder_url' => $createdUrl,
                     'status' => $response->status(),
                 ]);
+
+                // Ensure the folder has proper ACL permissions
+                $aclService = app(AclService::class);
+                $webId = $identity->webid;
+                
+                if ($webId) {
+                    $aclService->ensureFolderPermissions($identity, $createdUrl, $webId);
+                }
+
                 return true;
             }
 
