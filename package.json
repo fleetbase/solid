@@ -1,6 +1,6 @@
 {
     "name": "@fleetbase/solid-engine",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Solid Protocol Extension to Store and Share Data with Fleetbase",
     "fleetbase": {
         "route": "solid-protocol"
