@@ -51,7 +51,12 @@ class PodService
      */
     private function getStorageUrlFromWebId(string $webId): string
     {
-        $parsed  = parse_url($webId);
+        $parsed = parse_url($webId);
+        
+        if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new \InvalidArgumentException("Invalid WebID format: {$webId}");
+        }
+        
         $baseUrl = $parsed['scheme'] . '://' . $parsed['host'];
 
         if (isset($parsed['port'])) {
@@ -141,6 +146,11 @@ class PodService
                 
                 // Extract issuer from WebID URL
                 $parsed = parse_url($webId);
+                
+                if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+                    throw new \Exception("Invalid WebID format: {$webId}");
+                }
+                
                 $issuer = $parsed['scheme'] . '://' . $parsed['host'];
                 if (isset($parsed['port'])) {
                     $issuer .= ':' . $parsed['port'];
@@ -352,6 +362,11 @@ class PodService
                 try {
                     // Extract issuer from WebID
                     $parsed = parse_url($webId);
+                    
+                    if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+                        throw new \Exception("Invalid WebID format: {$webId}");
+                    }
+                    
                     $issuer = $parsed['scheme'] . '://' . $parsed['host'];
                     if (isset($parsed['port'])) {
                         $issuer .= ':' . $parsed['port'];
@@ -795,10 +810,14 @@ class PodService
     public function getPodUrlFromWebId(string $webId): string
     {
         // Extract pod URL from WebID
-        // WebID format: http://solid:3000/test/profile/card#me
-        // Pod URL: http://solid:3000/test/
+        // WebID format: https://example-solid-server.com/username/profile/card#me
+        // Pod URL: https://example-solid-server.com/username/
         
         $parsed = parse_url($webId);
+        
+        if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new \InvalidArgumentException("Invalid WebID format: {$webId}");
+        }
         $path = $parsed['path'] ?? '';
         
         // Remove /profile/card from the path

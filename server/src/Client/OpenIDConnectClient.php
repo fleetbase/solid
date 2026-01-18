@@ -351,7 +351,15 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
     {
         $value = Redis::get($key);
         if (Str::isJson($value)) {
-            $value = (object) json_decode($value);
+            $decoded = json_decode($value);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('[JSON DECODE ERROR]', [
+                    'key' => $key,
+                    'error' => json_last_error_msg()
+                ]);
+                return null;
+            }
+            $value = (object) $decoded;
         }
 
         return $value;
@@ -709,6 +717,14 @@ final class OpenIDConnectClient extends BaseOpenIDConnectClient
             }
 
             $keyData = json_decode(Storage::get($keyPath), true);
+            
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('[DPOP KEY JSON DECODE ERROR]', [
+                    'error' => json_last_error_msg(),
+                    'key_path' => $keyPath
+                ]);
+                return null;
+            }
 
             if (!$keyData || !isset($keyData['private_key'], $keyData['public_jwk'])) {
                 return null;
