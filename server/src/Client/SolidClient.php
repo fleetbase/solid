@@ -132,9 +132,9 @@ class SolidClient
         // Handle different data types
         if (is_string($data)) {
             return Http::withOptions($options)->withBody($data, $options['headers']['Content-Type'] ?? 'text/plain')->send($method, $url);
-        } else {
-            return Http::withOptions($options)->{$method}($url, $data);
         }
+
+        return Http::withOptions($options)->{$method}($url, $data);
     }
 
     /**
@@ -149,26 +149,7 @@ class SolidClient
         $url         = $this->createRequestUrl($uri);
         $accessToken = $this->identity->getAccessToken();
 
-        // Debug: Log access token details
         if ($accessToken) {
-            try {
-                $tokenParts = explode('.', $accessToken);
-                if (count($tokenParts) === 3) {
-                    $payload = json_decode(base64_decode(strtr($tokenParts[1], '-_', '+/')), true);
-                    Log::debug('[ACCESS TOKEN PAYLOAD]', [
-                        'webid' => $payload['webid'] ?? null,
-                        'sub' => $payload['sub'] ?? null,
-                        'client_id' => $payload['client_id'] ?? null,
-                        'scope' => $payload['scope'] ?? null,
-                        'iat' => $payload['iat'] ?? null,
-                        'exp' => $payload['exp'] ?? null,
-                        'cnf_jkt' => $payload['cnf']['jkt'] ?? null,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('[ACCESS TOKEN DECODE FAILED]', ['error' => $e->getMessage()]);
-            }
-            
             $options['headers']                  = isset($options['headers']) && is_array($options['headers']) ? $options['headers'] : [];
             $options['headers']['Authorization'] = 'DPoP ' . $accessToken;
             $options['headers']['DPoP']          = $this->oidc->createDPoP($method, $url, $accessToken);
@@ -179,7 +160,13 @@ class SolidClient
             $options['verify'] = false;
         }
 
-        Log::info('[SOLID REQUEST HEADERS]', ['headers' => $options['headers']]);
+        // Only the header names. The values carry the access token and the DPoP
+        // proof, and a log file is not a place either of them belongs.
+        Log::debug('[Solid] Sending an authenticated request.', [
+            'method'  => $method,
+            'url'     => $url,
+            'headers' => array_keys(is_array($options['headers'] ?? null) ? $options['headers'] : []),
+        ]);
 
         // Handle different data types
         if (is_string($data)) {
@@ -195,34 +182,33 @@ class SolidClient
             ]);
 
             $response = Http::withOptions($options)->withBody($data, $contentType)->send($method, $url);
-            
+
             // Debug: Log response details
             Log::debug('[SOLID RESPONSE]', [
-                'status' => $response->status(),
+                'status'  => $response->status(),
                 'headers' => $response->headers(),
-                'body' => $response->body(),
-            ]);
-            
-            return $response;
-        } else {
-            // For array data, use the original method
-            Log::info('[SENDING ARRAY DATA]', [
-                'method' => $method,
-                'url'    => $url,
-                'data'   => $data,
+                'body'    => $response->body(),
             ]);
 
-            $response = Http::withOptions($options)->{$method}($url, $data);
-            
-            // Debug: Log response details
-            Log::debug('[SOLID RESPONSE]', [
-                'status' => $response->status(),
-                'headers' => $response->headers(),
-                'body' => $response->body(),
-            ]);
-            
             return $response;
         }
+        // For array data, use the original method
+        Log::info('[SENDING ARRAY DATA]', [
+            'method' => $method,
+            'url'    => $url,
+            'data'   => $data,
+        ]);
+
+        $response = Http::withOptions($options)->{$method}($url, $data);
+
+        // Debug: Log response details
+        Log::debug('[SOLID RESPONSE]', [
+            'status'  => $response->status(),
+            'headers' => $response->headers(),
+            'body'    => $response->body(),
+        ]);
+
+        return $response;
     }
 
     /**

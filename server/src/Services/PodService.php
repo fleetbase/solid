@@ -2,7 +2,6 @@
 
 namespace Fleetbase\Solid\Services;
 
-use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -129,19 +128,11 @@ class PodService
             Log::info('[USING CSS ACCOUNT MANAGEMENT API]');
             
             try {
-                // Get WebID and extract issuer from it
-                $tokenResponse = $identity->token_response;
-                $idToken = data_get($tokenResponse, 'id_token');
-                
-                if (!$idToken) {
-                    throw new \Exception('No ID token available');
-                }
-                
-                $solid = SolidClient::create(['identity' => $identity]);
-                $webId = $solid->oidc->getWebIdFromIdToken($idToken);
-                
+                // Read the WebID from the claims verified when the identity signed in.
+                $webId = $identity->getWebId();
+
                 if (!$webId) {
-                    throw new \Exception('Could not extract WebID from ID token');
+                    throw new \Exception('No WebID is available for this identity');
                 }
                 
                 // Extract issuer from WebID URL
@@ -527,16 +518,9 @@ class PodService
      */
     public function getProfileData(SolidIdentity $identity): array
     {
-        $tokenResponse = $identity->token_response;
-        $idToken       = data_get($tokenResponse, 'id_token');
-        if (!$idToken) {
-            throw new \Exception('No ID token available');
-        }
-
-        $solid = SolidClient::create(['identity' => $identity]);
-        $webId = $solid->oidc->getWebIdFromIdToken($idToken);
+        $webId = $identity->getWebId();
         if (!$webId) {
-            throw new \Exception('No WebID found');
+            throw new \Exception('No WebID is available for this identity');
         }
 
         // IMPORTANT: fetch the *document* (strip #me)

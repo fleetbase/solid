@@ -56,17 +56,83 @@ class SolidIdentity extends Model
 
     public function getAccessToken(): ?string
     {
-        // Use OIDC token only (proper Solid protocol)
-        $oidcToken = data_get($this, 'token_response.access_token');
-        
-        if ($oidcToken) {
-            \Illuminate\Support\Facades\Log::info('[USING OIDC TOKEN]', ['has_token' => true]);
-            return $oidcToken;
+        $accessToken = data_get($this, 'token_response.access_token');
+
+        return is_string($accessToken) && $accessToken !== '' ? $accessToken : null;
+    }
+
+    /**
+     * The refresh token from the last successful sign-in, if the provider issued one.
+     */
+    public function getRefreshToken(): ?string
+    {
+        $refreshToken = data_get($this, 'token_response.refresh_token');
+
+        return is_string($refreshToken) && $refreshToken !== '' ? $refreshToken : null;
+    }
+
+    /**
+     * Persist a token response together with the ID token claims that were
+     * verified when it was issued.
+     *
+     * The claims are kept because an ID token cannot be re-verified later — it is
+     * short-lived, and by the time anything reads the WebID back out of the
+     * database the token has expired. Storing what was verified at sign-in is what
+     * lets `getWebId()` avoid trusting an unverified decode.
+     *
+     * @param array<string, mixed> $verifiedIdTokenClaims
+     */
+    public function storeTokenResponse(object $tokenResponse, array $verifiedIdTokenClaims = []): self
+    {
+        $payload = (array) $tokenResponse;
+
+        if ($verifiedIdTokenClaims !== []) {
+            $payload['id_token_claims'] = $verifiedIdTokenClaims;
         }
-        
-        // No token available
-        \Illuminate\Support\Facades\Log::warning('[NO ACCESS TOKEN AVAILABLE]');
-        return null;
+
+        $this->update(['token_response' => $payload]);
+
+        return $this;
+    }
+
+    /**
+     * The user's WebID.
+     *
+     * Read from the claims verified at sign-in. Falls back to an *unverified*
+     * decode of the stored ID token for identities that authenticated before those
+     * claims were persisted, so an existing session is not signed out by the
+     * upgrade; that fallback can be removed once those have all been renewed.
+     */
+    public function getWebId(): ?string
+    {
+        $webId = data_get($this, 'token_response.id_token_claims.webid')
+            ?? data_get($this, 'token_response.id_token_claims.sub');
+
+        if (is_string($webId) && $webId !== '') {
+            return $webId;
+        }
+
+        $idToken = data_get($this, 'token_response.id_token');
+
+        if (!is_string($idToken) || $idToken === '') {
+            return null;
+        }
+
+        // Decoded in place rather than through the OIDC client: the client's
+        // constructor performs provider discovery, and a model accessor must not
+        // make a network call. Nothing is verified here — see the note above.
+        $segments = explode('.', $idToken);
+        $claims   = isset($segments[1])
+            ? json_decode((string) base64_decode(strtr($segments[1], '-_', '+/'), true), true)
+            : null;
+
+        if (!is_array($claims)) {
+            return null;
+        }
+
+        $webId = $claims['webid'] ?? $claims['sub'] ?? null;
+
+        return is_string($webId) && $webId !== '' ? $webId : null;
     }
 
     public function getRedirectUri(array $query = [], int $port = 8000): string

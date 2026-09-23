@@ -31,6 +31,7 @@ composer.lock
 /server_vendor
 /server/vendor/
 .phpunit.result.cache
+/.phpunit.cache
 .php_cs.cache
 .php-cs-fixer.cache
 *.swp
