@@ -5,6 +5,7 @@ namespace Fleetbase\Solid\Http\Controllers;
 use Fleetbase\Http\Controllers\Controller as BaseController;
 use Fleetbase\Http\Requests\AdminRequest;
 use Fleetbase\Models\Setting;
+use Fleetbase\Solid\Client\OpenIDConnectClient;
 use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Fleetbase\Solid\Services\PodService;
@@ -49,6 +50,11 @@ class SolidController extends BaseController
         $defaultConfig  = config('solid.server');
         $config         = array_merge($defaultConfig, $incomingConfig);
         Setting::configure('system.solid.server', $config);
+
+        // The OIDC provider is discovered from the server URL and memoised per
+        // process, so a long-lived worker would otherwise keep talking to the old
+        // provider until it restarted.
+        OpenIDConnectClient::flushProviderCaches();
 
         return response()->json($config);
     }
@@ -255,10 +261,34 @@ class SolidController extends BaseController
         return $containers;
     }
 
+    /**
+     * The Solid server's account index for the current identity.
+     *
+     * Used to be a `dd()`, which halted the request and dumped the raw response
+     * to the browser on a live route.
+     */
     public function getAccountIndex()
     {
-        $solidIdentity   = SolidIdentity::current();
-        $accountResponse = $solidIdentity->request('get', '.account');
-        dd($accountResponse->json());
+        try {
+            $identity = SolidIdentity::current();
+
+            if (!$identity->getAccessToken()) {
+                return response()->json(['error' => 'Not authenticated'], 401);
+            }
+
+            $accountResponse = $identity->request('get', '.account');
+
+            if (!$accountResponse->successful()) {
+                return response()->json([
+                    'error' => 'The Solid server did not return an account index.',
+                ], $accountResponse->status());
+            }
+
+            return response()->json($accountResponse->json());
+        } catch (\Throwable $e) {
+            Log::error('[Solid] Unable to read the account index.', ['error' => $e->getMessage()]);
+
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

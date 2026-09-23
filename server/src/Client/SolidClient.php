@@ -2,6 +2,7 @@
 
 namespace Fleetbase\Solid\Client;
 
+use Fleetbase\Models\Setting;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -13,7 +14,15 @@ class SolidClient
     private string $host = 'localhost';
     private int $port    = 3000;
     private bool $secure = true;
-    public SolidIdentity $identity;
+
+    /**
+     * Nullable because a client can legitimately be built without one — discovery
+     * and the unauthenticated requests do not need an identity. It was typed
+     * non-nullable while being assigned from an absent option, so `new SolidClient([])`
+     * raised a TypeError.
+     */
+    public ?SolidIdentity $identity = null;
+
     public OpenIDConnectClient $oidc;
     private const DEFAULT_MIME_TYPE   = 'text/turtle';
     private const LDP_BASIC_CONTAINER = 'http://www.w3.org/ns/ldp#BasicContainer';
@@ -29,11 +38,53 @@ class SolidClient
      */
     public function __construct(array $options = [])
     {
-        $this->identity = data_get($options, 'identity');
-        $this->host     = config('solid.server.host', data_get($options, 'host'));
-        $this->port     = (int) config('solid.server.port', data_get($options, 'port'));
-        $this->secure   = (bool) config('solid.server.secure', data_get($options, 'secure'));
+        $identity       = data_get($options, 'identity');
+        $this->identity = $identity instanceof SolidIdentity ? $identity : null;
+
+        $server         = static::resolveServerConfig();
+        $this->host     = (string) (data_get($options, 'host') ?? $server['host']);
+        $this->port     = (int) (data_get($options, 'port') ?? $server['port']);
+        $this->secure   = (bool) (data_get($options, 'secure') ?? $server['secure']);
+
         $this->oidc     = OpenIDConnectClient::create(['solid' => $this, ...$options]);
+    }
+
+    /**
+     * The Solid server to talk to: the administrator's saved setting first, then
+     * the env-backed config defaults.
+     *
+     * `SolidController::saveServerConfig()` writes `system.solid.server` and
+     * `getServerConfig()` reads it back, but nothing ever fed it to this client —
+     * so changing the host or port in the console had no effect on any request.
+     *
+     * Note the ordering against the constructor: an explicit option wins over the
+     * saved setting, which wins over config. The previous code read
+     * `config('solid.server.host', data_get($options, 'host'))`, where the second
+     * argument is `config()`'s *default* — and since the key is always defined, a
+     * caller-supplied host was silently discarded.
+     *
+     * @return array{host: string, port: int, secure: bool}
+     */
+    protected static function resolveServerConfig(): array
+    {
+        $defaults = (array) config('solid.server', []);
+        $saved    = [];
+
+        try {
+            $saved = (array) (Setting::system('solid.server') ?? []);
+        } catch (\Throwable $e) {
+            // Settings live in the database; a request that runs before migrations
+            // (or with the table missing) must fall back to config rather than fail.
+            Log::warning('[Solid] Unable to read the saved server configuration.', ['error' => $e->getMessage()]);
+        }
+
+        $server = array_merge($defaults, array_filter($saved, static fn ($value): bool => $value !== null && $value !== ''));
+
+        return [
+            'host'   => (string) ($server['host'] ?? 'localhost'),
+            'port'   => (int) ($server['port'] ?? 3000),
+            'secure' => (bool) ($server['secure'] ?? false),
+        ];
     }
 
     /**
