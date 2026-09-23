@@ -7,6 +7,26 @@
     </p>
 </p>
 
+<p align="center">
+    <a href="https://github.com/fleetbase/solid">
+        <img src="https://img.shields.io/badge/repo-fleetbase%2Fsolid-111827?style=flat-square" alt="Repository">
+    </a>
+    <a href="https://github.com/fleetbase/solid/blob/main/LICENSE.md">
+        <img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue?style=flat-square" alt="License: AGPL-3.0-or-later">
+    </a>
+    <a href="https://codecov.io/gh/fleetbase/solid">
+        <img src="https://codecov.io/gh/fleetbase/solid/branch/main/graph/badge.svg" alt="Coverage">
+    </a>
+    <a href="https://www.npmjs.com/package/@fleetbase/solid-engine">
+        <img src="https://img.shields.io/badge/npm-%40fleetbase%2Fsolid--engine-CB3837?style=flat-square" alt="NPM package">
+    </a>
+    <a href="https://packagist.org/packages/fleetbase/solid-api">
+        <img src="https://img.shields.io/badge/packagist-fleetbase%2Fsolid--api-F28D1A?style=flat-square" alt="Packagist package">
+    </a>
+    <img src="https://img.shields.io/badge/node-%3E%3D18-339933?style=flat-square" alt="Node >= 18">
+    <img src="https://img.shields.io/badge/php-%5E8.1-777BB4?style=flat-square" alt="PHP ^8.1">
+</p>
+
 # Introduction:
 
 Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groundbreaking approach to managing data by enabling decentralized data ownership and interoperability through Linked Data principles. In the realm of logistics, Solid presents a promising solution for revolutionizing supply chain management by facilitating seamless data sharing among stakeholders. This document outlines Solid's capabilities and requirements for implementing a logistics solution, along with a user needs assessment highlighting UI/UX changes necessary for optimal user experience.
@@ -161,6 +181,26 @@ Next: We will continue work on completing the Sold <> Fleetbase integration wi
 Fleetbase has implemented a Solid Client which implements the Standard Solid authentication methods to communicate with the server. The Fleetbase SolidClient is able to communicate securely with the Solid protocol using the Standard DPoP encryption method for authentication provided by the Solid specification (https://solidproject.org/TR/oidc#tokens-id)
 
 - Ability to link Fleetbase account with Solid Web ID later via user settings.
+
+#### Solid-OIDC implementation
+
+The relying-party handshake lives in `server/src/Client/OpenIDConnectClient.php` and
+`server/src/Auth/`, with no third-party OIDC library. Solid-OIDC needs three things a
+general-purpose OAuth client does not provide — RFC 7591 dynamic client registration,
+RFC 9449 DPoP-bound tokens, and an issuer discovered per tenant at runtime — so the
+extension owns that code rather than wrapping a library around it. ID token
+verification follows the same conventions as Core API's `Fleetbase\Auth\OAuth\IdTokenVerifier`:
+a short-lived JWKS cache, resolution by `kid`, one forced refetch when a token names an
+unknown key, and TLS verification that is never inferred from the app environment.
+
+What the handshake checks on the authorization callback: the `state` (single use, server
+side), the ID token's signature against the provider's published JWKS, its `iss`, `aud`
+and `azp`, its expiry, its `nonce`, and that the access token is bound to the DPoP key
+this identity holds.
+
+Everything is configured under the `oidc` key of `server/config/solid.php`. The one
+setting a local development environment usually needs is `SOLID_OIDC_VERIFY_TLS=false`,
+for a Solid server with a self-signed certificate.
 
 # Funding
 

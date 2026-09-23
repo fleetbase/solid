@@ -6,7 +6,7 @@ on:
     tags:
       - 'v*'
   pull_request:
-    branches: [ main ]
+    branches: [ main, 'release/v*', 'dev-v*' ]
 
 jobs:
   build:
@@ -28,14 +28,51 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libzip-dev libgd-dev libfreetype6-dev libjpeg-dev libpng-dev imagemagick libmagickwand-dev libmemcached-dev libgeos-dev libgmp-dev default-mysql-client libicu-dev
 
+    - name: Configure Composer Auth for Github
+      run: composer config --global github-oauth.github.com ${{ secrets._GITHUB_AUTH_TOKEN }}
+
     - name: Validate composer.json and composer.lock
       run: composer validate
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
+    # test:lint rather than lint: `composer lint` runs php-cs-fixer in *fix* mode,
+    # so in CI it rewrote files in the runner and exited 0 whatever the state of
+    # the branch. The dry-run form is the actual gate, and the tree is clean now.
     - name: Run Lint
-      run: composer lint
+      run: composer test:lint
 
-    # - name: Run Tests -- Will add tests back after phppest issue https://github.com/pestphp/pest/issues/920 is fixed
-    #   run: composer test:unit
+    # Newly enforceable: phpstan at level max is clean against
+    # phpstan-baseline.neon, so new code is held to it.
+    - name: Run Static Analysis
+      run: composer test:types
+
+    # Re-enabled. Pest's binary resolves its autoloader from a hardcoded
+    # `vendor/`, which this package does not have -- it installs to server_vendor --
+    # so `pest` could not start here at all. scripts/pest-runner.php, taken from
+    # storefront, bridges that with a symlink for the duration of the run.
+    - name: Run Tests
+      run: composer test:unit
+
+    - name: Generate Coverage Baseline
+      run: XDEBUG_MODE=coverage composer coverage:baseline
+
+    - name: Upload Coverage Baseline
+      uses: actions/upload-artifact@v4
+      with:
+        name: solid-coverage-clover
+        path: coverage/clover.xml
+        if-no-files-found: error
+
+    # No --fail-under gate, unlike fleetops: most of this package predates its
+    # tests and sits at 0%, so a gate would only ever be red. The report is
+    # published so the number is visible and can be moved deliberately.
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage/clover.xml
+        disable_search: true
+        flags: backend
+        fail_ci_if_error: false

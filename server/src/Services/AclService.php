@@ -15,24 +15,25 @@ class AclService
     }
 
     /**
-     * Check if the pod root has write/append permissions
+     * Check if the pod root has write/append permissions.
      */
     public function hasWritePermissions(SolidIdentity $identity, string $podUrl): bool
     {
         try {
             $response = $identity->request('get', $podUrl);
-            
+
             if (!$response->successful()) {
                 Log::warning('[ACL CHECK FAILED]', [
                     'pod_url' => $podUrl,
-                    'status' => $response->status(),
+                    'status'  => $response->status(),
                 ]);
+
                 return false;
             }
 
             $wacAllow = $response->header('WAC-Allow');
             Log::info('[ACL CHECK]', [
-                'pod_url' => $podUrl,
+                'pod_url'   => $podUrl,
                 'wac_allow' => $wacAllow,
             ]);
 
@@ -45,26 +46,27 @@ class AclService
         } catch (\Exception $e) {
             Log::error('[ACL CHECK ERROR]', [
                 'pod_url' => $podUrl,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Update the pod root ACL to grant write permissions
+     * Update the pod root ACL to grant write permissions.
      */
     public function grantWritePermissions(SolidIdentity $identity, string $podUrl, string $webId): bool
     {
         try {
             $aclUrl = rtrim($podUrl, '/') . '/.acl';
-            
+
             // Generate ACL Turtle document
             $aclTurtle = $this->generateAclDocument($podUrl, $webId);
-            
+
             Log::info('[ACL UPDATE]', [
                 'acl_url' => $aclUrl,
-                'webid' => $webId,
+                'webid'   => $webId,
             ]);
 
             // PUT the ACL document
@@ -77,35 +79,37 @@ class AclService
             if ($response->successful()) {
                 Log::info('[ACL UPDATED]', [
                     'acl_url' => $aclUrl,
-                    'status' => $response->status(),
+                    'status'  => $response->status(),
                 ]);
+
                 return true;
             }
 
             Log::error('[ACL UPDATE FAILED]', [
                 'acl_url' => $aclUrl,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'status'  => $response->status(),
+                'body'    => $response->body(),
             ]);
-            return false;
 
+            return false;
         } catch (\Exception $e) {
             Log::error('[ACL UPDATE ERROR]', [
                 'pod_url' => $podUrl,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Generate ACL Turtle document
+     * Generate ACL Turtle document.
      */
     protected function generateAclDocument(string $podUrl, string $webId): string
     {
         $podUrl = rtrim($podUrl, '/') . '/';
-        
+
         return <<<TURTLE
 @prefix acl: <http://www.w3.org/ns/auth/acl#>.
 
@@ -129,68 +133,65 @@ TURTLE;
     }
 
     /**
-     * Ensure pod has write permissions, update ACL if needed
+     * Ensure pod has write permissions, update ACL if needed.
      */
     public function ensureWritePermissions(SolidIdentity $identity, string $podUrl, string $webId): bool
     {
         // Check if already has write permissions
         if ($this->hasWritePermissions($identity, $podUrl)) {
             Log::info('[ACL OK]', ['pod_url' => $podUrl]);
+
             return true;
         }
 
         // Need to update ACL
         Log::info('[ACL NEEDS UPDATE]', ['pod_url' => $podUrl]);
+
         return $this->grantWritePermissions($identity, $podUrl, $webId);
     }
 
     /**
      * Ensure a folder has proper ACL permissions after creation.
      *
-     * @param SolidIdentity $identity
      * @param string $folderUrl The folder URL (must end with /)
-     * @param string $webId The WebID to grant permissions to
-     * @return bool
+     * @param string $webId     The WebID to grant permissions to
      */
     public function ensureFolderPermissions(SolidIdentity $identity, string $folderUrl, string $webId): bool
     {
         try {
             // Ensure folder URL ends with /
             $folderUrl = rtrim($folderUrl, '/') . '/';
-            $aclUrl = $folderUrl . '.acl';
+            $aclUrl    = $folderUrl . '.acl';
 
             Log::info('[ACL] Ensuring folder permissions', [
                 'folder_url' => $folderUrl,
-                'acl_url' => $aclUrl,
-                'webid' => $webId,
+                'acl_url'    => $aclUrl,
+                'webid'      => $webId,
             ]);
 
             // Check if ACL already exists and has write permissions
             if ($this->hasFolderWritePermissions($identity, $folderUrl, $webId)) {
                 Log::info('[ACL] Folder already has write permissions', ['folder_url' => $folderUrl]);
+
                 return true;
             }
 
             // Create ACL with full permissions for the owner
             $aclContent = $this->generateFolderAcl($folderUrl, $webId);
-            
+
             return $this->createFolderAcl($identity, $aclUrl, $aclContent);
         } catch (\Throwable $e) {
             Log::error('[ACL] Failed to ensure folder permissions', [
                 'folder_url' => $folderUrl,
-                'error' => $e->getMessage(),
+                'error'      => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Check if a folder has write permissions.
-     *
-     * @param SolidIdentity $identity
-     * @param string $folderUrl
-     * @param string $webId
-     * @return bool
      */
     protected function hasFolderWritePermissions(SolidIdentity $identity, string $folderUrl, string $webId): bool
     {
@@ -203,16 +204,17 @@ TURTLE;
 
             // Check WAC-Allow header
             $wacAllow = $response->header('WAC-Allow');
-            
+
             if ($wacAllow) {
                 Log::debug('[ACL] WAC-Allow header', [
                     'folder_url' => $folderUrl,
-                    'wac_allow' => $wacAllow,
+                    'wac_allow'  => $wacAllow,
                 ]);
 
                 // Parse WAC-Allow header: user="read write", public="read"
                 if (preg_match('/user="([^"]*)"/i', $wacAllow, $matches)) {
                     $userModes = strtolower($matches[1]);
+
                     return str_contains($userModes, 'write') || str_contains($userModes, 'append');
                 }
             }
@@ -221,19 +223,15 @@ TURTLE;
         } catch (\Throwable $e) {
             Log::debug('[ACL] Error checking folder permissions', [
                 'folder_url' => $folderUrl,
-                'error' => $e->getMessage(),
+                'error'      => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Create an ACL file for a folder.
-     *
-     * @param SolidIdentity $identity
-     * @param string $aclUrl
-     * @param string $aclContent
-     * @return bool
      */
     protected function createFolderAcl(SolidIdentity $identity, string $aclUrl, string $aclContent): bool
     {
@@ -247,23 +245,25 @@ TURTLE;
             if ($response->successful()) {
                 Log::info('[ACL] Folder ACL created successfully', [
                     'acl_url' => $aclUrl,
-                    'status' => $response->status(),
+                    'status'  => $response->status(),
                 ]);
+
                 return true;
             }
 
             Log::error('[ACL] Failed to create folder ACL', [
                 'acl_url' => $aclUrl,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'status'  => $response->status(),
+                'body'    => $response->body(),
             ]);
 
             return false;
         } catch (\Throwable $e) {
             Log::error('[ACL] Error creating folder ACL', [
                 'acl_url' => $aclUrl,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -272,8 +272,7 @@ TURTLE;
      * Generate ACL content for a folder with full owner permissions.
      *
      * @param string $folderUrl The folder URL
-     * @param string $webId The WebID to grant permissions to
-     * @return string
+     * @param string $webId     The WebID to grant permissions to
      */
     protected function generateFolderAcl(string $folderUrl, string $webId): string
     {
@@ -291,69 +290,62 @@ TURTLE;
 
     /**
      * Check if a specific URL is writable (has write or append permissions).
-     *
-     * @param SolidIdentity $identity
-     * @param string $url
-     * @return bool
      */
     public function isWritable(SolidIdentity $identity, string $url): bool
     {
         try {
             $response = $identity->request('head', $url);
-            
+
             if (!$response->successful()) {
                 return false;
             }
 
             $wacAllow = $response->header('WAC-Allow');
-            
+
             if ($wacAllow && preg_match('/user="([^"]*)"/i', $wacAllow, $matches)) {
-                $modes = strtolower($matches[1]);
+                $modes      = strtolower($matches[1]);
                 $isWritable = str_contains($modes, 'write') || str_contains($modes, 'append');
-                
+
                 Log::debug('[ACL] Writable check', [
-                    'url' => $url,
-                    'wac_allow' => $wacAllow,
+                    'url'         => $url,
+                    'wac_allow'   => $wacAllow,
                     'is_writable' => $isWritable,
                 ]);
-                
+
                 return $isWritable;
             }
 
             return false;
         } catch (\Throwable $e) {
             Log::debug('[ACL] Writable check failed', [
-                'url' => $url,
+                'url'   => $url,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
      * Find writable storage locations from user profile.
-     *
-     * @param SolidIdentity $identity
-     * @param array $profile
-     * @return array
      */
     public function findWritableLocations(SolidIdentity $identity, array $profile): array
     {
         $writableLocations = [];
-        $webId = $profile['webid'] ?? null;
-        
+        $webId             = $profile['webid'] ?? null;
+
         if (!$webId) {
             return $writableLocations;
         }
 
         // Get pod URL from WebID
         $podUrl = $this->podService->getPodUrlFromWebId($webId);
-        
+
         // Check common storage locations
         $commonLocations = [
-            'public' => rtrim($podUrl, '/') . '/public/',
+            'public'  => rtrim($podUrl, '/') . '/public/',
             'private' => rtrim($podUrl, '/') . '/private/',
-            'inbox' => rtrim($podUrl, '/') . '/inbox/',
+            'inbox'   => rtrim($podUrl, '/') . '/inbox/',
         ];
 
         foreach ($commonLocations as $name => $url) {
@@ -371,7 +363,7 @@ TURTLE;
         }
 
         Log::info('[ACL] Found writable locations', [
-            'count' => count($writableLocations),
+            'count'     => count($writableLocations),
             'locations' => $writableLocations,
         ]);
 
@@ -380,11 +372,6 @@ TURTLE;
 
     /**
      * Resolve a storage URL from profile data.
-     *
-     * @param string $storage
-     * @param string $webId
-     * @param string $podUrl
-     * @return string|null
      */
     protected function resolveStorageUrl(string $storage, string $webId, string $podUrl): ?string
     {
@@ -400,6 +387,7 @@ TURTLE;
 
         // Handle relative paths
         $webIdBase = dirname($webId);
+
         return rtrim($webIdBase, '/') . '/' . ltrim($storage, '/');
     }
 }

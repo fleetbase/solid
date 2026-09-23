@@ -2,7 +2,6 @@
 
 namespace Fleetbase\Solid\Services;
 
-use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -51,7 +50,12 @@ class PodService
      */
     private function getStorageUrlFromWebId(string $webId): string
     {
-        $parsed  = parse_url($webId);
+        $parsed = parse_url($webId);
+
+        if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new \InvalidArgumentException("Invalid WebID format: {$webId}");
+        }
+
         $baseUrl = $parsed['scheme'] . '://' . $parsed['host'];
 
         if (isset($parsed['port'])) {
@@ -117,114 +121,6 @@ class PodService
 
         Log::info('[CREATING POD]', ['name' => $name, 'storage_url' => $storageUrl, 'pod_url' => $podUrl]);
 
-        // Check if identity has CSS credentials for account management API
-        $cssAccountService = app(CssAccountService::class);
-        
-        if ($cssAccountService->hasCredentials($identity)) {
-            Log::info('[USING CSS ACCOUNT MANAGEMENT API]');
-            
-            try {
-                // Get WebID and extract issuer from it
-                $tokenResponse = $identity->token_response;
-                $idToken = data_get($tokenResponse, 'id_token');
-                
-                if (!$idToken) {
-                    throw new \Exception('No ID token available');
-                }
-                
-                $solid = SolidClient::create(['identity' => $identity]);
-                $webId = $solid->oidc->getWebIdFromIdToken($idToken);
-                
-                if (!$webId) {
-                    throw new \Exception('Could not extract WebID from ID token');
-                }
-                
-                // Extract issuer from WebID URL
-                $parsed = parse_url($webId);
-                $issuer = $parsed['scheme'] . '://' . $parsed['host'];
-                if (isset($parsed['port'])) {
-                    $issuer .= ':' . $parsed['port'];
-                }
-                
-                // Use email/password login to get CSS-Account-Token for pod management
-                $email = $identity->css_email;
-                $password = decrypt($identity->css_password);
-                
-                Log::info('[CSS POD CREATION] Logging in with email/password for pod management');
-                
-                $authorization = $cssAccountService->login($issuer, $email, $password);
-                
-                if (!$authorization) {
-                    throw new \Exception('Failed to login to CSS account for pod creation');
-                }
-                
-                // Get the account API controls to find the pod creation endpoint
-                $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => "CSS-Account-Token {$authorization}",
-                ])->get("{$issuer}/.account/");
-                
-                if (!$controlsResponse->successful()) {
-                    throw new \Exception('Failed to get account controls');
-                }
-                
-                $controls = $controlsResponse->json();
-                
-                Log::info('[CSS ACCOUNT CONTROLS]', ['controls' => $controls]);
-                
-                $podControlUrl = data_get($controls, 'controls.account.pod');
-                
-                if (!$podControlUrl) {
-                    Log::warning('[POD CONTROL URL NOT FOUND]', ['controls_keys' => array_keys($controls)]);
-                    // Fall back to legacy methods
-                    throw new \Exception('Pod control URL not found - falling back to legacy methods');
-                }
-                
-                Log::info('[CSS POD CONTROL URL]', ['url' => $podControlUrl]);
-                
-                // Use the account management API to create pod
-                $response = \Illuminate\Support\Facades\Http::withHeaders([
-                    'Authorization' => "CSS-Account-Token {$authorization}",
-                    'Content-Type' => 'application/json',
-                ])->post($podControlUrl, [
-                    'name' => $podSlug,
-                ]);
-                
-                Log::info('[CSS ACCOUNT API RESPONSE]', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-                
-                if ($response->successful()) {
-                    $podData = $response->json();
-                    
-                    return [
-                        'id' => $podSlug,
-                        'name' => $name,
-                        'url' => $podData['pod'] ?? $podUrl,
-                        'description' => $description,
-                        'created_at' => now()->toISOString(),
-                        'type' => 'pod',
-                        'status' => 'created',
-                        'method' => 'css_account_api',
-                    ];
-                }
-                
-                Log::warning('[CSS ACCOUNT API FAILED]', [
-                    'status' => $response->status(),
-                    'error' => $response->body(),
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('[CSS ACCOUNT API ERROR]', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-                // Fall through to legacy methods
-            }
-        } else {
-            Log::info('[NO CSS CREDENTIALS - USING LEGACY METHODS]');
-        }
-
-        // Legacy methods as fallback
         $metadata = $this->generatePodMetadata($name, $description);
 
         // ---- Method 1: POST to parent (recommended) ----
@@ -342,68 +238,8 @@ class PodService
         try {
             $profile    = $this->getProfileData($identity);
             $storageUrl = $this->getStorageUrlFromWebId($profile['webid']);
-            $webId      = $profile['webid'];
 
             $pods = [];
-            
-            // Try to get pods from CSS Account Management API first
-            $cssAccountService = app(CssAccountService::class);
-            if ($cssAccountService->hasCredentials($identity)) {
-                try {
-                    // Extract issuer from WebID
-                    $parsed = parse_url($webId);
-                    $issuer = $parsed['scheme'] . '://' . $parsed['host'];
-                    if (isset($parsed['port'])) {
-                        $issuer .= ':' . $parsed['port'];
-                    }
-                    
-                    $email = $identity->css_email;
-                    $password = decrypt($identity->css_password);
-                    
-                    $authorization = $cssAccountService->login($issuer, $email, $password);
-                    
-                    if ($authorization) {
-                        // Get account controls
-                        $controlsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                            'Authorization' => "CSS-Account-Token {$authorization}",
-                        ])->get("{$issuer}/.account/");
-                        
-                        if ($controlsResponse->successful()) {
-                            $controls = $controlsResponse->json();
-                            $podControlUrl = data_get($controls, 'controls.account.pod');
-                            
-                            if ($podControlUrl) {
-                                // Get pods from account management API
-                                $podsResponse = \Illuminate\Support\Facades\Http::withHeaders([
-                                    'Authorization' => "CSS-Account-Token {$authorization}",
-                                ])->get($podControlUrl);
-                                
-                                if ($podsResponse->successful()) {
-                                    $podsData = $podsResponse->json();
-                                    $accountPods = data_get($podsData, 'pods', []);
-                                    
-                                    Log::info('[CSS ACCOUNT PODS]', ['pods' => $accountPods]);
-                                    
-                                    foreach ($accountPods as $podUrl => $accountUrl) {
-                                        $podName = $this->extractPodName($podUrl);
-                                        $pods[] = [
-                                            'id' => Str::slug($podName),
-                                            'name' => $podName,
-                                            'url' => $podUrl,
-                                            'type' => 'pod',
-                                            'source' => 'css_account',
-                                        ];
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('[CSS ACCOUNT PODS FETCH WARNING]', [
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
 
             // Get the main storage pod
             try {
@@ -464,7 +300,7 @@ class PodService
         } catch (\Throwable $e) {
             Log::error('[GET POD CONTENTS ERROR]', [
                 'pod_id_or_url' => $podIdOrUrl,
-                'error'  => $e->getMessage(),
+                'error'         => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -512,16 +348,9 @@ class PodService
      */
     public function getProfileData(SolidIdentity $identity): array
     {
-        $tokenResponse = $identity->token_response;
-        $idToken       = data_get($tokenResponse, 'id_token');
-        if (!$idToken) {
-            throw new \Exception('No ID token available');
-        }
-
-        $solid = SolidClient::create(['identity' => $identity]);
-        $webId = $solid->oidc->getWebIdFromIdToken($idToken);
+        $webId = $identity->getWebId();
         if (!$webId) {
-            throw new \Exception('No WebID found');
+            throw new \Exception('No WebID is available for this identity');
         }
 
         // IMPORTANT: fetch the *document* (strip #me)
@@ -720,10 +549,10 @@ class PodService
                     'name' => $this->extractPodName($resourceUrl),
                     'type' => substr($resourceUrl, -1) === '/' ? 'container' : 'resource',
                 ];
-                
+
                 // Try to extract additional metadata for this resource
                 $item = array_merge($item, $this->extractResourceMetadata($content, $resourceUrl));
-                
+
                 $items[] = $item;
             }
         }
@@ -737,30 +566,30 @@ class PodService
     private function extractResourceMetadata(string $content, string $resourceUrl): array
     {
         $metadata = [];
-        
+
         // Escape special regex characters in URL
         $escapedUrl = preg_quote($resourceUrl, '/');
-        
+
         // Extract resource type (e.g., ldp:BasicContainer, foaf:Document)
         if (preg_match('/<' . $escapedUrl . '>\s+a\s+([^;\s]+)/', $content, $matches)) {
             $metadata['rdf_type'] = trim($matches[1]);
         }
-        
+
         // Extract dc:title
         if (preg_match('/<' . $escapedUrl . '>.*?dc:title\s+"([^"]+)"/', $content, $matches)) {
             $metadata['title'] = $matches[1];
         }
-        
+
         // Extract dc:modified or posix:mtime
         if (preg_match('/<' . $escapedUrl . '>.*?(?:dc:modified|posix:mtime)\s+(\d+)/', $content, $matches)) {
-            $metadata['modified'] = (int)$matches[1];
+            $metadata['modified'] = (int) $matches[1];
         }
-        
+
         // Extract posix:size
         if (preg_match('/<' . $escapedUrl . '>.*?posix:size\s+(\d+)/', $content, $matches)) {
-            $metadata['size'] = (int)$matches[1];
+            $metadata['size'] = (int) $matches[1];
         }
-        
+
         return $metadata;
     }
 
@@ -788,28 +617,29 @@ class PodService
 
     /**
      * Get pod URL from WebID.
-     *
-     * @param string $webId
-     * @return string
      */
     public function getPodUrlFromWebId(string $webId): string
     {
         // Extract pod URL from WebID
-        // WebID format: http://solid:3000/test/profile/card#me
-        // Pod URL: http://solid:3000/test/
-        
+        // WebID format: https://example-solid-server.com/username/profile/card#me
+        // Pod URL: https://example-solid-server.com/username/
+
         $parsed = parse_url($webId);
+
+        if ($parsed === false || !isset($parsed['scheme'], $parsed['host'])) {
+            throw new \InvalidArgumentException("Invalid WebID format: {$webId}");
+        }
         $path = $parsed['path'] ?? '';
-        
+
         // Remove /profile/card from the path
         $podPath = preg_replace('#/profile/card.*$#', '/', $path);
-        
+
         $podUrl = $parsed['scheme'] . '://' . $parsed['host'];
         if (isset($parsed['port'])) {
             $podUrl .= ':' . $parsed['port'];
         }
         $podUrl .= $podPath;
-        
+
         return $podUrl;
     }
 
@@ -821,9 +651,9 @@ class PodService
         try {
             // Ensure parent URL ends with /
             $parentUrl = rtrim($parentUrl, '/') . '/';
-            
+
             Log::info('[CREATE FOLDER]', [
-                'parent_url' => $parentUrl,
+                'parent_url'  => $parentUrl,
                 'folder_name' => $folderName,
             ]);
 
@@ -831,8 +661,8 @@ class PodService
             $response = $identity->request('post', $parentUrl, '', [
                 'headers' => [
                     'Content-Type' => 'text/turtle',
-                    'Link' => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
-                    'Slug' => $folderName,
+                    'Link'         => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
+                    'Slug'         => $folderName,
                 ],
             ]);
 
@@ -840,13 +670,13 @@ class PodService
                 $createdUrl = $response->header('Location') ?? $parentUrl . $folderName . '/';
                 Log::info('[FOLDER CREATED]', [
                     'folder_url' => $createdUrl,
-                    'status' => $response->status(),
+                    'status'     => $response->status(),
                 ]);
 
                 // Ensure the folder has proper ACL permissions
                 $aclService = app(AclService::class);
-                $webId = $identity->webid;
-                
+                $webId      = $identity->webid;
+
                 if ($webId) {
                     $aclService->ensureFolderPermissions($identity, $createdUrl, $webId);
                 }
@@ -855,17 +685,17 @@ class PodService
             }
 
             Log::error('[FOLDER CREATE FAILED]', [
-                'parent_url' => $parentUrl,
+                'parent_url'  => $parentUrl,
                 'folder_name' => $folderName,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'status'      => $response->status(),
+                'body'        => $response->body(),
             ]);
 
             return false;
         } catch (\Throwable $e) {
             Log::error('[FOLDER CREATE ERROR]', [
                 'folder_url' => $folderUrl,
-                'error' => $e->getMessage(),
+                'error'      => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -887,22 +717,23 @@ class PodService
             if ($response->successful()) {
                 Log::info('[RESOURCE DELETED]', [
                     'resource_url' => $resourceUrl,
-                    'status' => $response->status(),
+                    'status'       => $response->status(),
                 ]);
+
                 return true;
             }
 
             Log::error('[RESOURCE DELETE FAILED]', [
                 'resource_url' => $resourceUrl,
-                'status' => $response->status(),
-                'body' => $response->body(),
+                'status'       => $response->status(),
+                'body'         => $response->body(),
             ]);
 
             return false;
         } catch (\Throwable $e) {
             Log::error('[RESOURCE DELETE ERROR]', [
                 'resource_url' => $resourceUrl,
-                'error' => $e->getMessage(),
+                'error'        => $e->getMessage(),
             ]);
             throw $e;
         }

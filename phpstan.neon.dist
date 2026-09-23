@@ -1,3 +1,16 @@
+includes:
+    # Errors that predate this package having any static analysis at all: Laravel
+    # symbols phpstan cannot discover without larastan (facade __callStatic,
+    # Eloquent magic properties, global helpers) plus untyped legacy signatures.
+    # larastan is not an option here -- it needs laravel/framework, and this
+    # package requires only the illuminate/* components it uses.
+    #
+    # The baseline exists so `composer test:types` is a gate rather than a
+    # permanently red command: new code is held to level max, and anything in it
+    # that gets fixed can be regenerated out with
+    # `phpstan analyse --generate-baseline=phpstan-baseline.neon`.
+    - phpstan-baseline.neon
+
 parameters:
     level: max
     paths:

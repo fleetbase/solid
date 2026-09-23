@@ -2,6 +2,7 @@
 
 namespace Fleetbase\Solid\Client;
 
+use Fleetbase\Models\Setting;
 use Fleetbase\Solid\Models\SolidIdentity;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -13,7 +14,15 @@ class SolidClient
     private string $host = 'localhost';
     private int $port    = 3000;
     private bool $secure = true;
-    public SolidIdentity $identity;
+
+    /**
+     * Nullable because a client can legitimately be built without one — discovery
+     * and the unauthenticated requests do not need an identity. It was typed
+     * non-nullable while being assigned from an absent option, so `new SolidClient([])`
+     * raised a TypeError.
+     */
+    public ?SolidIdentity $identity = null;
+
     public OpenIDConnectClient $oidc;
     private const DEFAULT_MIME_TYPE   = 'text/turtle';
     private const LDP_BASIC_CONTAINER = 'http://www.w3.org/ns/ldp#BasicContainer';
@@ -29,11 +38,53 @@ class SolidClient
      */
     public function __construct(array $options = [])
     {
-        $this->identity = data_get($options, 'identity');
-        $this->host     = config('solid.server.host', data_get($options, 'host'));
-        $this->port     = (int) config('solid.server.port', data_get($options, 'port'));
-        $this->secure   = (bool) config('solid.server.secure', data_get($options, 'secure'));
+        $identity       = data_get($options, 'identity');
+        $this->identity = $identity instanceof SolidIdentity ? $identity : null;
+
+        $server         = static::resolveServerConfig();
+        $this->host     = (string) (data_get($options, 'host') ?? $server['host']);
+        $this->port     = (int) (data_get($options, 'port') ?? $server['port']);
+        $this->secure   = (bool) (data_get($options, 'secure') ?? $server['secure']);
+
         $this->oidc     = OpenIDConnectClient::create(['solid' => $this, ...$options]);
+    }
+
+    /**
+     * The Solid server to talk to: the administrator's saved setting first, then
+     * the env-backed config defaults.
+     *
+     * `SolidController::saveServerConfig()` writes `system.solid.server` and
+     * `getServerConfig()` reads it back, but nothing ever fed it to this client —
+     * so changing the host or port in the console had no effect on any request.
+     *
+     * Note the ordering against the constructor: an explicit option wins over the
+     * saved setting, which wins over config. The previous code read
+     * `config('solid.server.host', data_get($options, 'host'))`, where the second
+     * argument is `config()`'s *default* — and since the key is always defined, a
+     * caller-supplied host was silently discarded.
+     *
+     * @return array{host: string, port: int, secure: bool}
+     */
+    public static function resolveServerConfig(): array
+    {
+        $defaults = (array) config('solid.server', []);
+        $saved    = [];
+
+        try {
+            $saved = (array) (Setting::system('solid.server') ?? []);
+        } catch (\Throwable $e) {
+            // Settings live in the database; a request that runs before migrations
+            // (or with the table missing) must fall back to config rather than fail.
+            Log::warning('[Solid] Unable to read the saved server configuration.', ['error' => $e->getMessage()]);
+        }
+
+        $server = array_merge($defaults, array_filter($saved, static fn ($value): bool => $value !== null && $value !== ''));
+
+        return [
+            'host'   => (string) ($server['host'] ?? 'localhost'),
+            'port'   => (int) ($server['port'] ?? 3000),
+            'secure' => (bool) ($server['secure'] ?? false),
+        ];
     }
 
     /**
@@ -55,10 +106,31 @@ class SolidClient
      */
     public function getServerUrl(): string
     {
-        $protocol = $this->secure ? 'https' : 'http';
-        $host     =  preg_replace('#^.*://#', '', $this->host);
+        return self::buildServerUrl($this->host, $this->port, $this->secure);
+    }
 
-        return "{$protocol}://{$host}:{$this->port}";
+    /**
+     * The configured Solid server URL, without constructing a client.
+     *
+     * `Fleetbase\Solid\Support\Utils::getSolidServerUrl()` needs the same answer
+     * this client uses. Reading the config separately is what made the two
+     * disagree once the administrator's saved setting entered the picture.
+     */
+    public static function serverUrl(): string
+    {
+        $server = static::resolveServerConfig();
+
+        return self::buildServerUrl($server['host'], $server['port'], $server['secure']);
+    }
+
+    private static function buildServerUrl(string $host, int $port, bool $secure): string
+    {
+        $protocol = $secure ? 'https' : 'http';
+        // The configured host may or may not carry a scheme; the protocol is
+        // decided by `secure`, so any scheme already on it is dropped.
+        $host = (string) preg_replace('#^.*://#', '', $host);
+
+        return "{$protocol}://{$host}:{$port}";
     }
 
     /**
@@ -132,9 +204,9 @@ class SolidClient
         // Handle different data types
         if (is_string($data)) {
             return Http::withOptions($options)->withBody($data, $options['headers']['Content-Type'] ?? 'text/plain')->send($method, $url);
-        } else {
-            return Http::withOptions($options)->{$method}($url, $data);
         }
+
+        return Http::withOptions($options)->{$method}($url, $data);
     }
 
     /**
@@ -149,26 +221,7 @@ class SolidClient
         $url         = $this->createRequestUrl($uri);
         $accessToken = $this->identity->getAccessToken();
 
-        // Debug: Log access token details
         if ($accessToken) {
-            try {
-                $tokenParts = explode('.', $accessToken);
-                if (count($tokenParts) === 3) {
-                    $payload = json_decode(base64_decode(strtr($tokenParts[1], '-_', '+/')), true);
-                    Log::debug('[ACCESS TOKEN PAYLOAD]', [
-                        'webid' => $payload['webid'] ?? null,
-                        'sub' => $payload['sub'] ?? null,
-                        'client_id' => $payload['client_id'] ?? null,
-                        'scope' => $payload['scope'] ?? null,
-                        'iat' => $payload['iat'] ?? null,
-                        'exp' => $payload['exp'] ?? null,
-                        'cnf_jkt' => $payload['cnf']['jkt'] ?? null,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('[ACCESS TOKEN DECODE FAILED]', ['error' => $e->getMessage()]);
-            }
-            
             $options['headers']                  = isset($options['headers']) && is_array($options['headers']) ? $options['headers'] : [];
             $options['headers']['Authorization'] = 'DPoP ' . $accessToken;
             $options['headers']['DPoP']          = $this->oidc->createDPoP($method, $url, $accessToken);
@@ -179,7 +232,13 @@ class SolidClient
             $options['verify'] = false;
         }
 
-        Log::info('[SOLID REQUEST HEADERS]', ['headers' => $options['headers']]);
+        // Only the header names. The values carry the access token and the DPoP
+        // proof, and a log file is not a place either of them belongs.
+        Log::debug('[Solid] Sending an authenticated request.', [
+            'method'  => $method,
+            'url'     => $url,
+            'headers' => array_keys(is_array($options['headers'] ?? null) ? $options['headers'] : []),
+        ]);
 
         // Handle different data types
         if (is_string($data)) {
@@ -195,34 +254,33 @@ class SolidClient
             ]);
 
             $response = Http::withOptions($options)->withBody($data, $contentType)->send($method, $url);
-            
+
             // Debug: Log response details
             Log::debug('[SOLID RESPONSE]', [
-                'status' => $response->status(),
+                'status'  => $response->status(),
                 'headers' => $response->headers(),
-                'body' => $response->body(),
-            ]);
-            
-            return $response;
-        } else {
-            // For array data, use the original method
-            Log::info('[SENDING ARRAY DATA]', [
-                'method' => $method,
-                'url'    => $url,
-                'data'   => $data,
+                'body'    => $response->body(),
             ]);
 
-            $response = Http::withOptions($options)->{$method}($url, $data);
-            
-            // Debug: Log response details
-            Log::debug('[SOLID RESPONSE]', [
-                'status' => $response->status(),
-                'headers' => $response->headers(),
-                'body' => $response->body(),
-            ]);
-            
             return $response;
         }
+        // For array data, use the original method
+        Log::info('[SENDING ARRAY DATA]', [
+            'method' => $method,
+            'url'    => $url,
+            'data'   => $data,
+        ]);
+
+        $response = Http::withOptions($options)->{$method}($url, $data);
+
+        // Debug: Log response details
+        Log::debug('[SOLID RESPONSE]', [
+            'status'  => $response->status(),
+            'headers' => $response->headers(),
+            'body'    => $response->body(),
+        ]);
+
+        return $response;
     }
 
     /**
