@@ -48,10 +48,22 @@ class Utils extends FleetbaseUtils
     /**
      * Get the Solid server URL from configuration.
      *
+     * Constructs the URL from individual server configuration components.
+     *
      * @return string
      */
     public static function getSolidServerUrl(): string
     {
-        return config('solid.server.url', 'http://localhost:3000');
+        $host = config('solid.server.host', 'http://localhost');
+        $port = config('solid.server.port', 3000);
+        $secure = config('solid.server.secure', false);
+        
+        // Remove protocol from host if present
+        $host = preg_replace('#^.*://#', '', $host);
+        
+        // Construct URL with proper protocol
+        $protocol = $secure ? 'https' : 'http';
+        
+        return "{$protocol}://{$host}:{$port}";
     }
 }
