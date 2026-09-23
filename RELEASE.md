@@ -45,13 +45,26 @@ The authorization callback now verifies what it receives. Previously it exchange
 - Removed: `jumbojett/openid-connect-php`, all seven `web-token/jwt-*` packages, `php-http/guzzle7-adapter`, `psr/http-factory-implementation`. The `web-token` stack and the PSR adapters it needed had no references anywhere in the extension.
 - Added: `firebase/php-jwt ^6.10|^7.0` (shared with Socialite rather than duplicating a JWT stack), `ext-json`, `ext-openssl`.
 - `php` raised from `^8.0` to `^8.1`, matching Core API and phpseclib 4.
+- Engine dependencies moved to their latest releases: `@fleetbase/ember-core` `^0.3.24`, `@fleetbase/ember-ui` `^0.4.3`, `@fleetbase/fleetops-data` `^0.2.2`. CI builds on Node 22.
+
+---
+## Also fixed
+
+Four defects that predate this release, found while auditing the OIDC code:
+
+- **`PodService` resolved a class that does not exist.** The commit that removed the CSS-credential approach in favour of OIDC tokens deleted `CssAccountService` but left two `app(CssAccountService::class)` call sites behind, so pod creation and the pod listing threw on entry. Those branches are removed, finishing that change.
+- **`getAccountIndex()` ended in `dd()`** on the live `GET solid/int/v1/account` route, halting the request and dumping the raw pod response. It returns JSON now. Seven more routes pointed at controller methods that do not exist (`play`, `getProfileData` and the five `sync-*` actions) and would 500 on hit; nothing calls them, so they are removed. Every routed method now resolves.
+- **The admin server-configuration UI had no effect.** `saveServerConfig()` wrote `system.solid.server` and `SolidClient` never read it, so changing the Solid host or port in the console changed nothing. Resolution is now explicit option → saved setting → config default. Two bugs in the same lines went with it: a caller-supplied host was silently discarded, and `new SolidClient([])` raised a `TypeError`.
+- **`composer test` failed in all three stages.** It passes now: `test:unit` is back on Pest through a runner that works around the package's custom `vendor-dir`, `test:types` is clean at phpstan `level: max` against a committed baseline, and the six long-unformatted files are formatted. CI enforces all three, and `Run Lint` is now the dry-run form — it previously ran php-cs-fixer in *fix* mode, so it could never fail.
+
+Coverage is now generated, uploaded to Codecov and shown as a README badge: 25.45% overall, with the code added here at 81–100%.
 
 ---
 ## Tests
 
 The suite went from one placeholder test to **108 tests / 208 assertions**, covering ID token verification and its failure modes, the full authorization and callback flow, `state` and `nonce` handling, DPoP proof structure and key storage, JWKS caching and rotation, and dynamic client registration. Verified on PHP 8.2 and 8.4.
 
-`composer test:unit` runs `phpunit`. Pest's binary resolves its autoloader from a hardcoded `vendor/`, which this package does not have — it sets `vendor-dir` to `server_vendor` — so `pest` could never start here, which is why the suite had been disabled in CI. CI runs the tests again.
+The suite had been disabled in CI because Pest's binary resolves its autoloader from a hardcoded `vendor/`, which this package does not have — it sets `vendor-dir` to `server_vendor` — so `pest` could not start here at all. `composer test:unit` now goes through `scripts/pest-runner.php`, adopted from storefront, which bridges that for the duration of the run. CI runs the tests again, plus static analysis, lint and coverage.
 
 ---
 ## Upgrading
