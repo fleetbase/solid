@@ -47,8 +47,6 @@ class Utils extends FleetbaseUtils
 
     /**
      * Get the Solid server URL from configuration.
-     *
-     * @return string
      */
     public static function getSolidServerUrl(): string
     {

@@ -1,0 +1,831 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Redis\\:\\:del\\(\\)\\.$#"
+			count: 1
+			path: server/src/Auth/RedisStateStore.php
+
+		-
+			message: "#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Redis\\:\\:get\\(\\)\\.$#"
+			count: 1
+			path: server/src/Auth/RedisStateStore.php
+
+		-
+			message: "#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Redis\\:\\:set\\(\\)\\.$#"
+			count: 1
+			path: server/src/Auth/RedisStateStore.php
+
+		-
+			message: "#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Redis\\:\\:setex\\(\\)\\.$#"
+			count: 1
+			path: server/src/Auth/RedisStateStore.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$uuid\\.$#"
+			count: 8
+			path: server/src/Client/OpenIDConnectClient.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Constant Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:DEFAULT_MIME_TYPE is unused\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Constant Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:LDP_BASIC_CONTAINER is unused\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Constant Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:LDP_RESOURCE is unused\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Constant Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:OIDC_ISSUER is unused\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Function app not found\\.$#"
+			count: 2
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Function config not found\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:__construct\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:authenticatedRequest\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:authenticatedRequest\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:create\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:createRequestUrl\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:delete\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:delete\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:get\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:get\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:patch\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:patch\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:post\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:post\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:put\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:put\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:request\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:request\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:requestWithIdentity\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Client\\\\SolidClient\\:\\:requestWithIdentity\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Parameter \\#1 \\$haystack of static method Illuminate\\\\Support\\\\Str\\:\\:startsWith\\(\\) expects string, string\\|null given\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: server/src/Client/SolidClient.php
+
+		-
+			message: "#^Function app not found\\.$#"
+			count: 2
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Function response not found\\.$#"
+			count: 19
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\DataController\\:\\:createFolder\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\DataController\\:\\:deleteItem\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\DataController\\:\\:importResources\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\DataController\\:\\:index\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\DataController\\:\\:showFolder\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Negated boolean expression is always false\\.$#"
+			count: 5
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function trim expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Parameter \\#3 \\$folderName of method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:createFolder\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Parameter \\#3 \\$resourceTypes of method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:importResources\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Part \\$folderName \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/DataController.php
+
+		-
+			message: "#^Call to an undefined static method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:where\\(\\)\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/OIDCController.php
+
+		-
+			message: "#^Function redirect not found\\.$#"
+			count: 2
+			path: server/src/Http/Controllers/OIDCController.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$id\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$identifier\\.$#"
+			count: 2
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Call to an undefined method Fleetbase\\\\Http\\\\Requests\\\\AdminRequest\\:\\:array\\(\\)\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Call to an undefined static method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:where\\(\\)\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Function config not found\\.$#"
+			count: 3
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Function redirect not found\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Function response not found\\.$#"
+			count: 16
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:authenticate\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:getAccountIndex\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:getAuthenticationStatus\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:getPods\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:getServerConfig\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:hello\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:logout\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:parseContainers\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:requestAuthentication\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:saveServerConfig\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Negated boolean expression is always false\\.$#"
+			count: 2
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Parameter \\#1 \\$url of method Fleetbase\\\\Solid\\\\Http\\\\Controllers\\\\SolidController\\:\\:extractPodName\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Parameter \\#2 \\$uri of method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:request\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Parameter \\#2 \\.\\.\\.\\$arrays of function array_merge expects array, mixed given\\.$#"
+			count: 1
+			path: server/src/Http/Controllers/SolidController.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$identifier\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Call to an undefined static method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:firstOrCreate\\(\\)\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Call to an undefined static method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:where\\(\\)\\.$#"
+			count: 2
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Function session not found\\.$#"
+			count: 4
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:getRedirectUri\\(\\) has parameter \\$query with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:request\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:request\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:request\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^PHPDoc type array of property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$fillable is not covariant with PHPDoc type array\\<int, string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$casts type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$fillable type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Models/SolidIdentity.php
+
+		-
+			message: "#^Property Fleetbase\\\\Solid\\\\Providers\\\\SolidServiceProvider\\:\\:\\$observers type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Providers/SolidServiceProvider.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\AclService\\:\\:findWritableLocations\\(\\) has parameter \\$profile with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/AclService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\AclService\\:\\:findWritableLocations\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/AclService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$webid\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Call to method firstWhere\\(\\) on an unknown class IlluminateAgnostic\\\\StrAgnostic\\\\Str\\\\Support\\\\Collection\\.$#"
+			count: 2
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Cannot access offset 'host' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
+			count: 2
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Cannot access offset 'path' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Cannot access offset 'scheme' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
+			count: 2
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Cannot access offset 'url' on mixed\\.$#"
+			count: 2
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Function app not found\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Function now not found\\.$#"
+			count: 5
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:createPod\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:createPodInStorage\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:extractResourceMetadata\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:getContainers\\(\\) has parameter \\$storageLocations with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:getContainers\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:getPodContents\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:getProfileData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:getUserPods\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:parseContainerContents\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:parseContainerUrls\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:parsePodData\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:parseProfile\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Parameter \\#2 \\$uri of method Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:request\\(\\) expects string, mixed given\\.$#"
+			count: 2
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Undefined variable\\: \\$folderUrl$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\Solid\\\\Models\\\\SolidIdentity\\:\\:\\$webid\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Cannot access property \\$public_id on mixed\\.$#"
+			count: 2
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Function app not found\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Function auth not found\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Function session not found\\.$#"
+			count: 2
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:convertToRDF\\(\\) has parameter \\$resource with no type specified\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:formatRDFValue\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:getFleetopsResources\\(\\) should return Illuminate\\\\Support\\\\Collection but returns Illuminate\\\\Support\\\\Collection\\|IlluminateAgnostic\\\\StrAgnostic\\\\Str\\\\Support\\\\Collection\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:getResourceProperties\\(\\) has parameter \\$resource with no type specified\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:getResourceProperties\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:importResourceType\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:importResources\\(\\) has parameter \\$resourceTypes with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\ResourceSyncService\\:\\:importResources\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Variable \\$resources in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: server/src/Services/ResourceSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$driver\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$location\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$make\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$model\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$online\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$plate_number\\.$#"
+			count: 3
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$status\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$trim\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$type\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$updated_at\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$uuid\\.$#"
+			count: 5
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$vendor\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$vin\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle\\:\\:\\$year\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$driver\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$make\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$model\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$plate_number\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$status\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$updated_at\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$uuid\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$vendor\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$vin\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$year\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Cannot access property \\$uuid on mixed\\.$#"
+			count: 3
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Cannot call method map\\(\\) on array\\<Illuminate\\\\Database\\\\Eloquent\\\\Builder\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Dead catch \\- Throwable is never thrown in the try block\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Function now not found\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Function session not found\\.$#"
+			count: 2
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:getAvailableVehicles\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:getSyncStatus\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:syncVehiclesToPod\\(\\) has parameter \\$vehicleIds with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:syncVehiclesToPod\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Parameter \\#1 \\$vehicle of method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:getVehicleDisplayName\\(\\) expects Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle, Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Parameter \\#3 \\$vehicle of method Fleetbase\\\\Solid\\\\Services\\\\VehicleSyncService\\:\\:syncSingleVehicle\\(\\) expects Fleetbase\\\\FleetOps\\\\Models\\\\Vehicle, mixed given\\.$#"
+			count: 1
+			path: server/src/Services/VehicleSyncService.php
+
+		-
+			message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$key follows optional parameter \\$data\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$value follows optional parameter \\$data\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Function config not found\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Method Fleetbase\\\\Solid\\\\Support\\\\Utils\\:\\:searchPods\\(\\) has parameter \\$data with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Parameter \\#1 \\$data of static method Fleetbase\\\\Solid\\\\Support\\\\Utils\\:\\:searchPods\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtolower expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Parameter \\#1 \\$string1 of function strcasecmp expects string, mixed given\\.$#"
+			count: 1
+			path: server/src/Support/Utils.php
+
+		-
+			message: "#^Function config not found\\.$#"
+			count: 2
+			path: server/src/routes.php

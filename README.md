@@ -7,6 +7,26 @@
     </p>
 </p>
 
+<p align="center">
+    <a href="https://github.com/fleetbase/solid">
+        <img src="https://img.shields.io/badge/repo-fleetbase%2Fsolid-111827?style=flat-square" alt="Repository">
+    </a>
+    <a href="https://github.com/fleetbase/solid/blob/main/LICENSE.md">
+        <img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue?style=flat-square" alt="License: AGPL-3.0-or-later">
+    </a>
+    <a href="https://codecov.io/gh/fleetbase/solid">
+        <img src="https://codecov.io/gh/fleetbase/solid/branch/main/graph/badge.svg" alt="Coverage">
+    </a>
+    <a href="https://www.npmjs.com/package/@fleetbase/solid-engine">
+        <img src="https://img.shields.io/badge/npm-%40fleetbase%2Fsolid--engine-CB3837?style=flat-square" alt="NPM package">
+    </a>
+    <a href="https://packagist.org/packages/fleetbase/solid-api">
+        <img src="https://img.shields.io/badge/packagist-fleetbase%2Fsolid--api-F28D1A?style=flat-square" alt="Packagist package">
+    </a>
+    <img src="https://img.shields.io/badge/node-%3E%3D18-339933?style=flat-square" alt="Node >= 18">
+    <img src="https://img.shields.io/badge/php-%5E8.1-777BB4?style=flat-square" alt="PHP ^8.1">
+</p>
+
 # Introduction:
 
 Solid, an innovative technology developed by Sir Tim Berners-Lee, offers a groundbreaking approach to managing data by enabling decentralized data ownership and interoperability through Linked Data principles. In the realm of logistics, Solid presents a promising solution for revolutionizing supply chain management by facilitating seamless data sharing among stakeholders. This document outlines Solid's capabilities and requirements for implementing a logistics solution, along with a user needs assessment highlighting UI/UX changes necessary for optimal user experience.

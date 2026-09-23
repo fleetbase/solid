@@ -3,40 +3,34 @@
 namespace Fleetbase\Solid\Services;
 
 use Fleetbase\Solid\Models\SolidIdentity;
-use Fleetbase\Solid\Client\SolidClient;
 use Illuminate\Support\Facades\Log;
 
 class ResourceSyncService
 {
     /**
      * Import resources into a pod.
-     *
-     * @param SolidIdentity $identity
-     * @param string $podUrl
-     * @param array $resourceTypes
-     * @return array
      */
     public function importResources(SolidIdentity $identity, string $podUrl, array $resourceTypes): array
     {
-        $imported = [];
-        $errors = [];
+        $imported   = [];
+        $errors     = [];
         $totalCount = 0;
 
         foreach ($resourceTypes as $resourceType) {
             try {
                 Log::info('[IMPORTING RESOURCE TYPE]', ['type' => $resourceType, 'pod_url' => $podUrl]);
-                
-                $result = $this->importResourceType($identity, $podUrl, $resourceType);
+
+                $result                  = $this->importResourceType($identity, $podUrl, $resourceType);
                 $imported[$resourceType] = $result['count'];
                 $totalCount += $result['count'];
-                
+
                 Log::info('[RESOURCE TYPE IMPORTED]', [
-                    'type' => $resourceType,
+                    'type'  => $resourceType,
                     'count' => $result['count'],
                 ]);
             } catch (\Throwable $e) {
                 Log::error('[RESOURCE IMPORT ERROR]', [
-                    'type' => $resourceType,
+                    'type'  => $resourceType,
                     'error' => $e->getMessage(),
                 ]);
                 $errors[$resourceType] = $e->getMessage();
@@ -44,25 +38,20 @@ class ResourceSyncService
         }
 
         return [
-            'imported' => $imported,
-            'errors' => $errors,
+            'imported'    => $imported,
+            'errors'      => $errors,
             'total_count' => $totalCount,
         ];
     }
 
     /**
      * Import a specific resource type.
-     *
-     * @param SolidIdentity $identity
-     * @param string $podUrl
-     * @param string $resourceType
-     * @return array
      */
     protected function importResourceType(SolidIdentity $identity, string $podUrl, string $resourceType): array
     {
         // Get resources from Fleetops
         $resources = $this->getFleetopsResources($resourceType);
-        
+
         if (empty($resources)) {
             return ['count' => 0];
         }
@@ -75,15 +64,15 @@ class ResourceSyncService
         $count = 0;
         foreach ($resources as $resource) {
             try {
-                $turtle = $this->convertToRDF($resourceType, $resource);
+                $turtle      = $this->convertToRDF($resourceType, $resource);
                 $resourceUrl = $containerUrl . $resource->public_id . '.ttl';
-                
+
                 $this->storeResource($identity, $resourceUrl, $turtle);
                 $count++;
             } catch (\Throwable $e) {
                 Log::warning('[RESOURCE IMPORT FAILED]', [
-                    'type' => $resourceType,
-                    'id' => $resource->public_id ?? 'unknown',
+                    'type'  => $resourceType,
+                    'id'    => $resource->public_id ?? 'unknown',
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -95,16 +84,15 @@ class ResourceSyncService
     /**
      * Get Fleetops resources by type.
      *
-     * @param string $resourceType
      * @return \Illuminate\Support\Collection
      */
     protected function getFleetopsResources(string $resourceType)
     {
         $modelMap = [
             'vehicles' => \Fleetbase\FleetOps\Models\Vehicle::class,
-            'drivers' => \Fleetbase\FleetOps\Models\Driver::class,
+            'drivers'  => \Fleetbase\FleetOps\Models\Driver::class,
             'contacts' => \Fleetbase\FleetOps\Models\Contact::class,
-            'orders' => \Fleetbase\FleetOps\Models\Order::class,
+            'orders'   => \Fleetbase\FleetOps\Models\Order::class,
         ];
 
         if (!isset($modelMap[$resourceType])) {
@@ -112,16 +100,16 @@ class ResourceSyncService
         }
 
         $modelClass = $modelMap[$resourceType];
-        
+
         // Get current company's resources
         $companyId = session('company');
-        
+
         Log::info('[FETCHING FLEETOPS RESOURCES]', [
             'resource_type' => $resourceType,
-            'model_class' => $modelClass,
-            'company_id' => $companyId,
+            'model_class'   => $modelClass,
+            'company_id'    => $companyId,
         ]);
-        
+
         if (!$companyId) {
             Log::warning('[NO COMPANY ID]', ['session' => session()->all()]);
             // Try to get from auth user
@@ -131,36 +119,33 @@ class ResourceSyncService
                 Log::info('[USING USER COMPANY]', ['company_id' => $companyId]);
             }
         }
-        
+
         if (!$companyId) {
             Log::error('[CANNOT DETERMINE COMPANY]');
+
             return collect([]);
         }
-        
+
         $query = $modelClass::where('company_uuid', $companyId)
             ->limit(100); // Limit for now to avoid overwhelming the pod
-            
+
         $count = $query->count();
         Log::info('[RESOURCE QUERY]', [
             'resource_type' => $resourceType,
-            'count' => $count,
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings(),
+            'count'         => $count,
+            'sql'           => $query->toSql(),
+            'bindings'      => $query->getBindings(),
         ]);
-        
+
         return $query->get();
     }
 
     /**
      * Convert a resource to RDF/Turtle format.
-     *
-     * @param string $resourceType
-     * @param mixed $resource
-     * @return string
      */
     protected function convertToRDF(string $resourceType, $resource): string
     {
-        $baseUri = "http://fleetbase.io/ns/{$resourceType}/";
+        $baseUri     = "http://fleetbase.io/ns/{$resourceType}/";
         $resourceUri = $baseUri . $resource->public_id;
 
         $turtle = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n";
@@ -189,9 +174,6 @@ class ResourceSyncService
 
     /**
      * Get RDF class name for resource type.
-     *
-     * @param string $resourceType
-     * @return string
      */
     protected function getResourceClass(string $resourceType): string
     {
@@ -200,44 +182,40 @@ class ResourceSyncService
 
     /**
      * Get properties for a resource type.
-     *
-     * @param string $resourceType
-     * @param mixed $resource
-     * @return array
      */
     protected function getResourceProperties(string $resourceType, $resource): array
     {
         switch ($resourceType) {
             case 'vehicles':
                 return [
-                    'name' => $resource->name,
-                    'make' => $resource->make,
-                    'model' => $resource->model,
-                    'year' => $resource->year,
-                    'vin' => $resource->vin,
+                    'name'         => $resource->name,
+                    'make'         => $resource->make,
+                    'model'        => $resource->model,
+                    'year'         => $resource->year,
+                    'vin'          => $resource->vin,
                     'plate_number' => $resource->plate_number,
-                    'status' => $resource->status,
-                    'created_at' => $resource->created_at?->toIso8601String(),
-                    'updated_at' => $resource->updated_at?->toIso8601String(),
+                    'status'       => $resource->status,
+                    'created_at'   => $resource->created_at?->toIso8601String(),
+                    'updated_at'   => $resource->updated_at?->toIso8601String(),
                 ];
 
             case 'drivers':
                 return [
-                    'name' => $resource->name,
-                    'email' => $resource->email,
-                    'phone' => $resource->phone,
+                    'name'           => $resource->name,
+                    'email'          => $resource->email,
+                    'phone'          => $resource->phone,
                     'license_number' => $resource->drivers_license_number,
-                    'status' => $resource->status,
-                    'created_at' => $resource->created_at?->toIso8601String(),
-                    'updated_at' => $resource->updated_at?->toIso8601String(),
+                    'status'         => $resource->status,
+                    'created_at'     => $resource->created_at?->toIso8601String(),
+                    'updated_at'     => $resource->updated_at?->toIso8601String(),
                 ];
 
             case 'contacts':
                 return [
-                    'name' => $resource->name,
-                    'email' => $resource->email,
-                    'phone' => $resource->phone,
-                    'type' => $resource->type,
+                    'name'       => $resource->name,
+                    'email'      => $resource->email,
+                    'phone'      => $resource->phone,
+                    'type'       => $resource->type,
                     'created_at' => $resource->created_at?->toIso8601String(),
                     'updated_at' => $resource->updated_at?->toIso8601String(),
                 ];
@@ -245,11 +223,11 @@ class ResourceSyncService
             case 'orders':
                 return [
                     'tracking_number' => $resource->public_id,
-                    'status' => $resource->status,
-                    'type' => $resource->type,
-                    'scheduled_at' => $resource->scheduled_at?->toIso8601String(),
-                    'created_at' => $resource->created_at?->toIso8601String(),
-                    'updated_at' => $resource->updated_at?->toIso8601String(),
+                    'status'          => $resource->status,
+                    'type'            => $resource->type,
+                    'scheduled_at'    => $resource->scheduled_at?->toIso8601String(),
+                    'created_at'      => $resource->created_at?->toIso8601String(),
+                    'updated_at'      => $resource->updated_at?->toIso8601String(),
                 ];
 
             default:
@@ -259,9 +237,6 @@ class ResourceSyncService
 
     /**
      * Format a value for RDF.
-     *
-     * @param mixed $value
-     * @return string
      */
     protected function formatRDFValue($value): string
     {
@@ -274,16 +249,13 @@ class ResourceSyncService
         }
 
         // Escape quotes and special characters
-        $escaped = str_replace(['"', '\\'], ['\\"', '\\\\'], (string)$value);
+        $escaped = str_replace(['"', '\\'], ['\\"', '\\\\'], (string) $value);
+
         return "\"{$escaped}\"";
     }
 
     /**
      * Create a container in the pod.
-     *
-     * @param SolidIdentity $identity
-     * @param string $containerUrl
-     * @return void
      */
     protected function createContainer(SolidIdentity $identity, string $containerUrl): void
     {
@@ -291,26 +263,26 @@ class ResourceSyncService
             $response = $identity->request('put', $containerUrl, '', [
                 'headers' => [
                     'Content-Type' => 'text/turtle',
-                    'Link' => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
+                    'Link'         => '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"',
                 ],
             ]);
 
             Log::info('[CONTAINER CREATED]', [
-                'url' => $containerUrl,
+                'url'    => $containerUrl,
                 'status' => $response->status(),
             ]);
 
             // Ensure the container has proper ACL permissions
             $aclService = app(AclService::class);
-            $webId = $identity->webid;
-            
+            $webId      = $identity->webid;
+
             if ($webId) {
                 $aclService->ensureFolderPermissions($identity, $containerUrl, $webId);
             }
         } catch (\Throwable $e) {
             // Container might already exist, that's okay
             Log::debug('[CONTAINER CREATION SKIPPED]', [
-                'url' => $containerUrl,
+                'url'    => $containerUrl,
                 'reason' => $e->getMessage(),
             ]);
         }
@@ -318,11 +290,6 @@ class ResourceSyncService
 
     /**
      * Store a resource in the pod.
-     *
-     * @param SolidIdentity $identity
-     * @param string $resourceUrl
-     * @param string $turtle
-     * @return void
      */
     protected function storeResource(SolidIdentity $identity, string $resourceUrl, string $turtle): void
     {
@@ -337,7 +304,7 @@ class ResourceSyncService
         }
 
         Log::debug('[RESOURCE STORED]', [
-            'url' => $resourceUrl,
+            'url'    => $resourceUrl,
             'status' => $response->status(),
         ]);
     }

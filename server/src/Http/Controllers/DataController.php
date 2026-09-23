@@ -34,11 +34,11 @@ class DataController extends BaseController
 
             // Get the user's primary pod URL from their WebID
             $profile = $this->podService->getProfileData($identity);
-            $webId = $profile['webid'];
-            $podUrl = $this->podService->getPodUrlFromWebId($webId);
-            
+            $webId   = $profile['webid'];
+            $podUrl  = $this->podService->getPodUrlFromWebId($webId);
+
             Log::info('[DATA INDEX]', [
-                'webid' => $webId,
+                'webid'   => $webId,
                 'pod_url' => $podUrl,
             ]);
 
@@ -73,13 +73,13 @@ class DataController extends BaseController
                 return response()->json(['error' => 'Not authenticated'], 401);
             }
 
-            $profile = $this->podService->getProfileData($identity);
-            $webId = $profile['webid'];
-            $podUrl = $this->podService->getPodUrlFromWebId($webId);
+            $profile   = $this->podService->getProfileData($identity);
+            $webId     = $profile['webid'];
+            $podUrl    = $this->podService->getPodUrlFromWebId($webId);
             $folderUrl = rtrim($podUrl, '/') . '/' . ltrim($slug, '/');
 
             Log::info('[FOLDER SHOW]', [
-                'slug' => $slug,
+                'slug'       => $slug,
                 'folder_url' => $folderUrl,
             ]);
 
@@ -120,12 +120,12 @@ class DataController extends BaseController
             ]);
 
             $folderName = $request->input('name');
-            $path = $request->input('path', '');
+            $path       = $request->input('path', '');
 
             $profile = $this->podService->getProfileData($identity);
-            $webId = $profile['webid'];
-            $podUrl = $this->podService->getPodUrlFromWebId($webId);
-            
+            $webId   = $profile['webid'];
+            $podUrl  = $this->podService->getPodUrlFromWebId($webId);
+
             // Build parent URL (where to create the folder)
             $parentUrl = rtrim($podUrl, '/') . '/';
             if (!empty($path)) {
@@ -133,38 +133,39 @@ class DataController extends BaseController
             }
 
             Log::info('[FOLDER CREATE]', [
-                'name' => $folderName,
-                'path' => $path,
+                'name'       => $folderName,
+                'path'       => $path,
                 'parent_url' => $parentUrl,
             ]);
 
             // Check if parent URL is writable before attempting folder creation
             $aclService = app(\Fleetbase\Solid\Services\AclService::class);
-            
+
             if (!$aclService->isWritable($identity, $parentUrl)) {
                 Log::warning('[FOLDER CREATE] Location not writable', [
                     'parent_url' => $parentUrl,
-                    'webid' => $webId,
+                    'webid'      => $webId,
                 ]);
 
                 // Find writable locations
                 $writableLocations = $aclService->findWritableLocations($identity, $profile);
-                
+
                 if (!empty($writableLocations)) {
                     $suggestion = array_values($writableLocations)[0];
+
                     return response()->json([
-                        'success' => false,
-                        'error' => 'Cannot create folder at specified location. You do not have write permissions.',
-                        'suggestion' => "Try creating the folder at: {$suggestion}",
+                        'success'            => false,
+                        'error'              => 'Cannot create folder at specified location. You do not have write permissions.',
+                        'suggestion'         => "Try creating the folder at: {$suggestion}",
                         'writable_locations' => $writableLocations,
                     ], 403);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'No writable locations found in your pod.',
-                        'help' => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
-                    ], 403);
                 }
+
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'No writable locations found in your pod.',
+                    'help'    => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
+                ], 403);
             }
 
             // Use POST with Slug header (Solid Protocol standard)
@@ -201,8 +202,8 @@ class DataController extends BaseController
             }
 
             $profile = $this->podService->getProfileData($identity);
-            $webId = $profile['webid'];
-            $podUrl = $this->podService->getPodUrlFromWebId($webId);
+            $webId   = $profile['webid'];
+            $podUrl  = $this->podService->getPodUrlFromWebId($webId);
             $itemUrl = rtrim($podUrl, '/') . '/' . ltrim($slug, '/');
 
             // Add trailing slash for folders
@@ -211,8 +212,8 @@ class DataController extends BaseController
             }
 
             Log::info('[ITEM DELETE]', [
-                'type' => $type,
-                'slug' => $slug,
+                'type'     => $type,
+                'slug'     => $slug,
                 'item_url' => $itemUrl,
             ]);
 
@@ -257,8 +258,8 @@ class DataController extends BaseController
 
             // Use the authenticated user's pod (from their WebID)
             $profile = $this->podService->getProfileData($identity);
-            $webId = $profile['webid'];
-            $podUrl = $this->podService->getPodUrlFromWebId($webId);
+            $webId   = $profile['webid'];
+            $podUrl  = $this->podService->getPodUrlFromWebId($webId);
 
             Log::info('[IMPORTING RESOURCES]', [
                 'pod_url'        => $podUrl,
@@ -268,30 +269,30 @@ class DataController extends BaseController
 
             // Check if pod URL is writable before importing
             $aclService = app(\Fleetbase\Solid\Services\AclService::class);
-            
+
             if (!$aclService->isWritable($identity, $podUrl)) {
                 Log::warning('[IMPORT RESOURCES] Pod root not writable', [
                     'pod_url' => $podUrl,
-                    'webid' => $webId,
+                    'webid'   => $webId,
                 ]);
 
                 // Find writable locations
                 $writableLocations = $aclService->findWritableLocations($identity, $profile);
-                
+
                 if (!empty($writableLocations)) {
                     return response()->json([
-                        'success' => false,
-                        'error' => 'Cannot import resources to pod root. You do not have write permissions.',
+                        'success'            => false,
+                        'error'              => 'Cannot import resources to pod root. You do not have write permissions.',
                         'writable_locations' => $writableLocations,
-                        'help' => 'Resources can only be imported to writable locations.',
-                    ], 403);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'No writable locations found in your pod.',
-                        'help' => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
+                        'help'               => 'Resources can only be imported to writable locations.',
                     ], 403);
                 }
+
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'No writable locations found in your pod.',
+                    'help'    => 'You may need to configure ACL permissions. See: https://docs.solidproject.org/managing-permissions',
+                ], 403);
             }
 
             $result = $this->resourceSyncService->importResources($identity, $podUrl, $resourceTypes);

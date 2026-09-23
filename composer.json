@@ -77,8 +77,15 @@
     "scripts": {
         "lint": "php-cs-fixer fix -v",
         "test:lint": "php-cs-fixer fix -v --dry-run",
-        "test:types": "phpstan analyse --ansi --memory-limit=0",
-        "test:unit": "phpunit --colors=always",
+        "test:types": "phpstan analyse --ansi --memory-limit=-1",
+        "test:unit": "php scripts/pest-runner.php --colors=always server/tests",
+        "test:coverage": "php scripts/coverage-runner.php --coverage --coverage-text --colors=always",
+        "test:coverage:clover": "mkdir -p coverage && php scripts/coverage-runner.php --coverage-clover=coverage/clover.xml --colors=always",
+        "coverage:summary": "php scripts/coverage-summary.php coverage/clover.xml",
+        "coverage:baseline": [
+            "@test:coverage:clover",
+            "@coverage:summary"
+        ],
         "test": [
             "@test:lint",
             "@test:types",
