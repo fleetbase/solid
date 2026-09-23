@@ -162,6 +162,26 @@ Fleetbase has implemented a Solid Client which implements the Standard Solid aut
 
 - Ability to link Fleetbase account with Solid Web ID later via user settings.
 
+#### Solid-OIDC implementation
+
+The relying-party handshake lives in `server/src/Client/OpenIDConnectClient.php` and
+`server/src/Auth/`, with no third-party OIDC library. Solid-OIDC needs three things a
+general-purpose OAuth client does not provide — RFC 7591 dynamic client registration,
+RFC 9449 DPoP-bound tokens, and an issuer discovered per tenant at runtime — so the
+extension owns that code rather than wrapping a library around it. ID token
+verification follows the same conventions as Core API's `Fleetbase\Auth\OAuth\IdTokenVerifier`:
+a short-lived JWKS cache, resolution by `kid`, one forced refetch when a token names an
+unknown key, and TLS verification that is never inferred from the app environment.
+
+What the handshake checks on the authorization callback: the `state` (single use, server
+side), the ID token's signature against the provider's published JWKS, its `iss`, `aud`
+and `azp`, its expiry, its `nonce`, and that the access token is bound to the DPoP key
+this identity holds.
+
+Everything is configured under the `oidc` key of `server/config/solid.php`. The one
+setting a local development environment usually needs is `SOLID_OIDC_VERIFY_TLS=false`,
+for a Solid server with a self-signed certificate.
+
 # Funding
 
 This project is funded through [NGI0 Entrust](https://nlnet.nl/entrust), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page]( https://nlnet.nl/project/Fleetbase-Solid).
