@@ -441,21 +441,6 @@ parameters:
 			path: server/src/Services/PodService.php
 
 		-
-			message: "#^Cannot access offset 'host' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
-			count: 2
-			path: server/src/Services/PodService.php
-
-		-
-			message: "#^Cannot access offset 'path' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
-			count: 1
-			path: server/src/Services/PodService.php
-
-		-
-			message: "#^Cannot access offset 'scheme' on array\\{scheme\\?\\: string, host\\?\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\|false\\.$#"
-			count: 2
-			path: server/src/Services/PodService.php
-
-		-
 			message: "#^Cannot access offset 'url' on mixed\\.$#"
 			count: 2
 			path: server/src/Services/PodService.php
@@ -527,6 +512,11 @@ parameters:
 
 		-
 			message: "#^Method Fleetbase\\\\Solid\\\\Services\\\\PodService\\:\\:parseProfile\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: server/src/Services/PodService.php
+
+		-
+			message: "#^Offset 'path' does not exist on array\\{scheme\\: string, host\\: string, port\\?\\: int\\<0, 65535\\>, user\\?\\: string, pass\\?\\: string, path\\?\\: string, query\\?\\: string, fragment\\?\\: string\\}\\.$#"
 			count: 1
 			path: server/src/Services/PodService.php
 
@@ -797,11 +787,6 @@ parameters:
 
 		-
 			message: "#^Deprecated in PHP 8\\.0\\: Required parameter \\$value follows optional parameter \\$data\\.$#"
-			count: 1
-			path: server/src/Support/Utils.php
-
-		-
-			message: "#^Function config not found\\.$#"
 			count: 1
 			path: server/src/Support/Utils.php
 

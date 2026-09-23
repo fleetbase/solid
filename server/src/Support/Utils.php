@@ -2,6 +2,7 @@
 
 namespace Fleetbase\Solid\Support;
 
+use Fleetbase\Solid\Client\SolidClient;
 use Fleetbase\Support\Utils as FleetbaseUtils;
 use Illuminate\Support\Str;
 
@@ -46,10 +47,15 @@ class Utils extends FleetbaseUtils
     }
 
     /**
-     * Get the Solid server URL from configuration.
+     * Get the Solid server URL.
+     *
+     * Delegates to SolidClient so there is exactly one answer. Building it here
+     * from `config('solid.server.*')` — as this did — ignores the host and port
+     * an administrator saved through the console, which SolidClient honours, so
+     * the two would report different servers.
      */
     public static function getSolidServerUrl(): string
     {
-        return config('solid.server.url', 'http://localhost:3000');
+        return SolidClient::serverUrl();
     }
 }

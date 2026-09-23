@@ -65,7 +65,7 @@ class SolidClient
      *
      * @return array{host: string, port: int, secure: bool}
      */
-    protected static function resolveServerConfig(): array
+    public static function resolveServerConfig(): array
     {
         $defaults = (array) config('solid.server', []);
         $saved    = [];
@@ -106,10 +106,31 @@ class SolidClient
      */
     public function getServerUrl(): string
     {
-        $protocol = $this->secure ? 'https' : 'http';
-        $host     =  preg_replace('#^.*://#', '', $this->host);
+        return self::buildServerUrl($this->host, $this->port, $this->secure);
+    }
 
-        return "{$protocol}://{$host}:{$this->port}";
+    /**
+     * The configured Solid server URL, without constructing a client.
+     *
+     * `Fleetbase\Solid\Support\Utils::getSolidServerUrl()` needs the same answer
+     * this client uses. Reading the config separately is what made the two
+     * disagree once the administrator's saved setting entered the picture.
+     */
+    public static function serverUrl(): string
+    {
+        $server = static::resolveServerConfig();
+
+        return self::buildServerUrl($server['host'], $server['port'], $server['secure']);
+    }
+
+    private static function buildServerUrl(string $host, int $port, bool $secure): string
+    {
+        $protocol = $secure ? 'https' : 'http';
+        // The configured host may or may not carry a scheme; the protocol is
+        // decided by `secure`, so any scheme already on it is dropped.
+        $host = (string) preg_replace('#^.*://#', '', $host);
+
+        return "{$protocol}://{$host}:{$port}";
     }
 
     /**
