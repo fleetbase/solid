@@ -16,6 +16,8 @@ parameters:
     paths:
         - server/src
 
-    checkMissingIterableValueType: true
-    checkGenericClassInNonGenericObjectType: false
     reportUnmatchedIgnoredErrors: true
+    # PHPStan 2 always checks iterable value types and dropped the generics switch;
+    # this identifier is what checkGenericClassInNonGenericObjectType: false used to skip.
+    ignoreErrors:
+        - identifier: missingType.generics
