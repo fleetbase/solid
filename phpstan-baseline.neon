@@ -397,7 +397,7 @@ parameters:
 			path: server/src/Http/Controllers/DataController.php
 
 		-
-			message: '#^Parameter \#1 \$array of function array_values expects array\<T\>, mixed given\.$#'
+			message: '#^Parameter \#1 \$array of function array_values expects array\<mixed\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: server/src/Http/Controllers/DataController.php
