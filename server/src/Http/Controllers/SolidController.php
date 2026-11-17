@@ -46,7 +46,7 @@ class SolidController extends BaseController
 
     public function saveServerConfig(AdminRequest $request)
     {
-        $incomingConfig = $request->array('server');
+        $incomingConfig = $request->inputArray('server');
         $defaultConfig  = config('solid.server');
         $config         = array_merge($defaultConfig, $incomingConfig);
         Setting::configure('system.solid.server', $config);
